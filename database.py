@@ -182,10 +182,11 @@ def mark_attendance_if_allowed(student_id, confidence):
         conn.close()
         return False, "Attendance already marked for today."
 
-    # Insert single attendance record for today
+    # Use Python's datetime.now() to insert the local timestamp
+    current_time = datetime.now()
     cursor.execute(
-        "INSERT INTO attendance (student_id, confidence, timestamp) VALUES (%s, %s, NOW())",
-        (student_id, float(confidence))
+        "INSERT INTO attendance (student_id, confidence, timestamp) VALUES (%s, %s, %s)",
+        (student_id, float(confidence), current_time)
     )
     conn.commit()
     conn.close()
