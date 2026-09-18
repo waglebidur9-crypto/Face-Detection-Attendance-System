@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition - Attendance System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark px-4">
+        <a class="navbar-brand fw-bold text-info" href="{{ url_for('dashboard') }}">⚡ Attendance System</a>
+        <div class="ms-auto">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                
+                <div class="card-custom">
+                    <h3 class="text-info mb-3">Live Face Recognition</h3>
+                    <p class="text-secondary small">Position your face clearly. Anti-spoofing protection is active.</p>
+
+                    <div class="position-relative d-inline-block rounded overflow-hidden border border-secondary shadow-lg mb-3" style="max-width: 100%;">
+                        <video id="video" autoplay playsinline width="640" height="480" class="w-100 rounded"></video>
+                        <canvas id="canvas" class="d-none"></canvas>
+                    </div>
+
+                    <div id="status-alert" class="alert alert-info mt-2 py-2 fw-semibold" role="alert">
+                        Initializing Camera...
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const statusAlert = document.getElementById('status-alert');
+
+        let recognitionStreak = {};
+        const requiredStreak = 5; // Requires ~2 seconds of stable presence
+        let isProcessing = false;
+
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
+                video.srcObject = stream;
+                statusAlert.className = "alert alert-info mt-2 py-2 fw-semibold";
+                statusAlert.innerText = "System Ready. Looking for faces...";
+            } catch (err) {
+                console.error("Camera access error:", err);
+                statusAlert.className = "alert alert-danger mt-2 py-2 fw-semibold";
+                statusAlert.innerText = "Error: Webcam access denied.";
+            }
+        }
+
+        function captureFrameAsBase64() {
+            if (video.videoWidth === 0 || video.videoHeight === 0) return null;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            return canvas.toDataURL('image/jpeg', 0.85);
+        }
+
+        async function processVideoFrame() {
+            if (isProcessing || video.paused || video.ended) return;
+
+            const imageBlob = captureFrameAsBase64();
+            if (!imageBlob) return;
+
+            isProcessing = true;
+
+            try {
+                let response = await fetch('/api/process_frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: imageBlob })
+                });
+
+                let data = await response.json();
+
+                if (data.status === "success" && data.faces && data.faces.length > 0) {
+                    let face = data.faces[0];
+                    
+                    if (face.student_id) {
+                        let studentId = face.student_id;
+                        recognitionStreak[studentId] = (recognitionStreak[studentId] || 0) + 1;
+
+                        if (recognitionStreak[studentId] < requiredStreak) {
+                            statusAlert.className = "alert alert-warning mt-2 py-2 fw-semibold";
+                            statusAlert.innerText = `Verifying ${face.name}... Hold steady (${recognitionStreak[studentId]}/${requiredStreak})`;
+                        } else if (recognitionStreak[studentId] === requiredStreak) {
+                            // Streak met! Now officially call backend to mark attendance
+                            let markRes = await fetch('/api/mark_attendance', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ student_id: studentId })
+                            });
+                            let markData = await markRes.json();
+
+                            statusAlert.className = `alert ${markData.success ? 'alert-success' : 'alert-warning'} mt-2 py-2 fw-semibold`;
+                            statusAlert.innerText = `${face.name} (ID: ${studentId}) - ${markData.message}`;
+                            
+                            // Prevent spamming requests for this student for 5 seconds
+                            setTimeout(() => { recognitionStreak[studentId] = 0; }, 5000);
+                        }
+                    } else {
+                        recognitionStreak = {};
+                        statusAlert.className = "alert alert-secondary mt-2 py-2 fw-semibold text-light";
+                        statusAlert.innerText = "Unrecognized Face Detected";
+                    }
+                } else {
+                    recognitionStreak = {};
+                    statusAlert.className = "alert alert-info mt-2 py-2 fw-semibold";
+                    statusAlert.innerText = "Looking for faces...";
+                }
+            } catch (err) {
+                console.error("Communication error:", err);
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        startCamera();
+        setInterval(processVideoFrame, 400);
+    </script>
+</body>
+</html>

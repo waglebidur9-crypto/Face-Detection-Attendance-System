@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Edit Student Details{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card-custom">
+            <h4 class="text-info mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square"></i> Edit Student Information
+            </h4>
+
+            <!-- Flash Error / Success Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} py-2 mb-3">{{ message }}</div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form action="/edit_student/{{ student.student_id }}" method="POST">
+                <!-- Student ID (Now editable) -->
+<div class="mb-3">
+    <label class="form-label text-secondary small text-uppercase fw-bold">Student ID</label>
+    <input type="text" name="student_id" class="form-control form-control-dark" 
+           value="{{ student.student_id }}" required>
+</div>
+                </div>
+
+                <!-- Student Full Name -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Full Name</label>
+                    <input type="text" name="name" class="form-control form-control-dark" 
+                           value="{{ student.name }}" required>
+                </div>
+
+                <!-- Department -->
+                <div class="mb-4">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Department</label>
+                    <input type="text" name="department" class="form-control form-control-dark" 
+                           value="{{ student.department }}" required>
+                </div>
+
+                <!-- Form Controls -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="/students" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-info-glow fw-bold px-4 py-2">
+                        <i class="bi bi-check-circle me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Daily Attendance{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="m-0 font-weight-bold text-white">Daily Attendance Records</h4>
+    
+    <form action="/attendance" method="GET" class="d-flex gap-2">
+        <input type="date" name="date" class="form-control form-control-dark" value="{{ selected_date }}" onchange="this.form.submit()">
+        <button type="submit" class="btn btn-outline-info">
+            <i class="bi bi-calendar-check me-1"></i> View Date
+        </button>
+    </form>
+</div>
+
+<div class="row">
+    <!-- Day Selector Sidebar -->
+    <div class="col-md-3 mb-4">
+        <div class="card-custom">
+            <h6 class="text-secondary mb-3 fw-bold">Attendance History</h6>
+            <div class="list-group list-group-flush bg-transparent">
+                {% for day in summary %}
+                <a href="/attendance?date={{ day.attendance_date }}" 
+                   class="list-group-item list-group-item-action bg-transparent border-secondary d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active{% endif %}">
+                    <div>
+                        <i class="bi bi-calendar-event me-2 text-info"></i>
+                        <span class="text-white">{{ day.attendance_date }}</span>
+                    </div>
+                    <span class="badge bg-success rounded-pill">{{ day.total_present }} Present</span>
+                </a>
+                {% else %}
+                <div class="text-secondary small">No attendance records logged yet.</div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Student Attendance List for Selected Date -->
+    <div class="col-md-9">
+        <div class="card-custom">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5 class="m-0 text-info">Logs for {{ selected_date }}</h5>
+                <span class="badge bg-primary fs-6">{{ logs|length }} Total Recorded</span>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table table-dark-custom align-middle">
+                    <thead>
+                        <tr>
+                            <th style="background-color: #252525 !important; color: #00d2ff !important;">STUDENT ID</th>
+                            <th style="background-color: #252525 !important; color: #00d2ff !important;">NAME</th>
+                            <th style="background-color: #252525 !important; color: #00d2ff !important;">DEPARTMENT</th>
+                            <th style="background-color: #252525 !important; color: #00d2ff !important;">TIME LOGGED</th>
+                            <th style="background-color: #252525 !important; color: #00d2ff !important;">MATCH CONFIDENCE</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr style="background-color: #1e1e1e !important; color: #ffffff !important;">
+                            <td class="fw-bold" style="background-color: #1e1e1e !important; color: #00d2ff !important;">{{ log.student_id }}</td>
+                            <td class="fw-medium" style="background-color: #1e1e1e !important; color: #ffffff !important;">{{ log.name }}</td>
+                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-secondary">{{ log.department }}</span></td>
+                            <td style="background-color: #1e1e1e !important; color: #ffc107 !important;"><i class="bi bi-clock me-1"></i> {{ log.log_time }}</td>
+                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-success">{{ "%.1f"|format(log.confidence * 100) }}%</span></td>
+                        </tr>
+                        {% else %}
+                        <tr style="background-color: #1e1e1e !important;">
+                            <td colspan="5" class="text-center text-secondary py-4" style="background-color: #1e1e1e !important;">
+                                No student attendance recorded for {{ selected_date }}.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

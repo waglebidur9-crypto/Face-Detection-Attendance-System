@@ -1,0 +1,196 @@
+/* ==========================================
+   Face Recognition Attendance System - Dark Theme
+   ========================================== */
+
+/* Global Styles */
+body {
+    background-color: #121212 !important;
+    color: #e0e0e0 !important;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+    background-color: #1a1a1a !important;
+    border-bottom: 1px solid #2b2b2b;
+}
+
+/* Custom Containers & Cards */
+.card-custom {
+    background-color: #1a1a1a !important;
+    border: 1px solid #2b2b2b;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+/* Form Labels */
+.form-label, 
+label {
+    color: #00d2ff !important;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+/* Form Controls & Inputs (Fixes hidden text & background issues) */
+.form-control, 
+.form-control-dark,
+input.form-control,
+select.form-control,
+textarea.form-control {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+    border: 1px solid #444444 !important;
+    border-radius: 8px;
+    padding: 10px 14px;
+}
+
+/* Input Focus States */
+.form-control:focus,
+.form-control-dark:focus,
+input.form-control:focus,
+select.form-control:focus {
+    background-color: #262626 !important;
+    color: #ffffff !important;
+    border-color: #00d2ff !important;
+    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4) !important;
+}
+
+/* Form Placeholders */
+.form-control::placeholder,
+input::placeholder,
+textarea::placeholder {
+    color: #888888 !important;
+    opacity: 1;
+}
+
+/* Readonly Inputs */
+.form-control[readonly],
+input[readonly] {
+    background-color: #151515 !important;
+    color: #00d2ff !important;
+    border-color: #333333 !important;
+    opacity: 0.85;
+}
+
+/* Dropdown Options Contrast */
+select.form-control option {
+    background-color: #1e1e1e !important;
+    color: #ffffff !important;
+}
+
+/* Buttons & Glowing Effects */
+.btn-info-glow,
+button[type="submit"],
+.btn-primary {
+    background-color: #00d2ff !important;
+    color: #121212 !important;
+    border: none !important;
+    font-weight: bold !important;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-info-glow:hover,
+button[type="submit"]:hover,
+.btn-primary:hover {
+    background-color: #00b3db !important;
+    color: #000000 !important;
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+}
+
+/* Outline Secondary Buttons (Cancel, etc.) */
+.btn-outline-secondary {
+    color: #b0b0b0 !important;
+    border-color: #444444 !important;
+    border-radius: 8px;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #2b2b2b !important;
+    color: #ffffff !important;
+    border-color: #00d2ff !important;
+}
+
+/* Browser Autofill Color Overrides (Chrome & Edge) */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+}
+/* Make browser date/time picker calendar icons visible in dark mode */
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+    filter: invert(1) brightness(1.5);
+    cursor: pointer;
+    opacity: 0.85;
+    transition: opacity 0.2s ease;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator:hover,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+    opacity: 1;
+    filter: invert(1) drop-shadow(0 0 4px #00d2ff);
+}
+/* ==========================================
+   Modern Dark Table Styles
+   ========================================== */
+
+.table-custom,
+.table {
+    background-color: #1a1a1a !important;
+    color: #e0e0e0 !important;
+    border-collapse: separate !important;
+    border-spacing: 0;
+    width: 100%;
+    margin-bottom: 0;
+}
+
+/* Table Header */
+.table-custom thead th,
+.table thead th {
+    background-color: #222222 !important;
+    color: #00d2ff !important;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+    font-weight: 700;
+    border-bottom: 2px solid #333333 !important;
+    padding: 14px 16px;
+}
+
+/* Table Body Cells */
+.table-custom tbody td,
+.table tbody td {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+    padding: 14px 16px;
+    vertical-align: middle;
+    border-bottom: 1px solid #2b2b2b !important;
+}
+
+/* Subtle Row Hover Effect */
+.table-custom tbody tr:hover td,
+.table tbody tr:hover td {
+    background-color: #242424 !important;
+    color: #00d2ff !important;
+}
+
+/* Action Buttons Group Styling inside Tables */
+.table td .btn,
+.table-custom td .btn {
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    margin-right: 4px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Table Badge Overrides */
+.table .badge {
+    padding: 6px 10px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
