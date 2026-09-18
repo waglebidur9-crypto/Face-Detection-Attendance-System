@@ -291,5 +291,26 @@ def reports():
     daily_summary = get_daily_attendance_summary()
     return render_template("reports.html", summary=daily_summary)
 
+# --- GLOBAL ERROR HANDLERS TO PREVENT FULL CRASHES ---
+
+@app.errorhandler(404)
+def not_found_error(error):
+    if request.path.startswith('/api/'):
+        return jsonify({"success": False, "message": "API endpoint not found."}), 404
+    return render_template("login.html", error="The page you are looking for does not exist."), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    print(f"Server 500 Error: {error}")
+    if request.path.startswith('/api/'):
+        return jsonify({"success": False, "message": "A server error occurred while processing your request. Please try again."}), 500
+    return render_template("login.html", error="An internal server error occurred. Please try again later."), 500
+
+@app.errorhandler(Exception)
+def handle_unexpected_exception(error):
+    print(f"Unhandled Exception: {error}")
+    if request.path.startswith('/api/'):
+        return jsonify({"success": False, "message": f"Unexpected error: {str(error)}"}), 500
+    return render_template("login.html", error="Something went wrong. Please try again."), 500
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
