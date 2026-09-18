@@ -1,6 +1,7 @@
 import os
 import mysql.connector
 import json
+from werkzeug.security import generate_password_hash
 import numpy as np
 from datetime import datetime
 
@@ -46,6 +47,16 @@ def init_db():
             FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
         )
     """)
+
+    # --- ADD THIS BLOCK TO CREATE DEFAULT ADMIN ---
+    cursor.execute("SELECT id FROM users WHERE username = 'admin'")
+    if not cursor.fetchone():
+        hashed_password = generate_password_hash('admin123')
+        cursor.execute(
+            "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+            ('admin', hashed_password, 'admin')
+        )
+    # ---------------------------------------------
 
     conn.commit()
     conn.close()
