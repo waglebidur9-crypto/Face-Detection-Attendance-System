@@ -4,3 +4,4 @@ numpy==1.26.4
 requests==2.31.0
 werkzeug==3.0.1
 mysql-connector-python==8.3.0
+gunicorn
