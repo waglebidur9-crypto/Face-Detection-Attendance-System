@@ -1,14 +1,15 @@
+import os
 import mysql.connector
 import json
 import numpy as np
 from datetime import datetime
 
 MYSQL_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'root123',  # Update with your MySQL password
-    'database': 'face_attendance_new_db',
-    'port': 3306
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ.get('DB_PASSWORD', 'root123'),
+    'database': os.environ.get('DB_NAME', 'face_attendance_new_db'),
+    'port': int(os.environ.get('DB_PORT', 3306))
 }
 
 def get_db():
@@ -208,6 +209,7 @@ def get_daily_attendance_summary():
             row["attendance_date"] = ""
             
     return summary
+
 def get_dashboard_metrics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
