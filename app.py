@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from datetime import datetime
 from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 from database import get_dashboard_metrics
 from database import (
     init_db, get_db, save_student, update_student_with_id_change, delete_student,
@@ -15,17 +15,45 @@ from face_engine import FaceEngine
 app = Flask(__name__)
 app.secret_key = "super_secret_face_attendance_key"
 
+# Initialize database tables
 init_db()
+
+# Automatically seed default admin account if not already present
+def seed_default_admin():
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username = 'admin'")
+        if not cursor.fetchone():
+            hashed_pw = generate_password_hash("admin123")
+            cursor.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
+                ("admin", hashed_pw, "admin")
+            )
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"Admin seeding error: {e}")
+
+seed_default_admin()
 engine = FaceEngine()
 
 def base64_to_image(base64_string):
     if not base64_string:
         return None
-    if "," in base64_string:
-        base64_string = base64_string.split(",")[1]
-    img_data = base64.b64decode(base64_string)
-    nparr = np.frombuffer(img_data, np.uint8)
-    return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    try:
+        if "," in base64_string:
+            base64_string = base64_string.split(",")[1]
+        img_data = base64.b64decode(base64_string)
+        if not img_data:
+            return None
+        nparr = np.frombuffer(img_data, np.uint8)
+        if nparr.size == 0:
+            return None
+        return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    except Exception as e:
+        print(f"Base64 decode exception: {e}")
+        return None
 
 @app.route("/")
 def index():
@@ -70,6 +98,7 @@ def dashboard():
         system_accuracy=metrics["system_accuracy"],
         overall_rate=metrics["overall_rate"]
     )
+
 @app.route("/recognize")
 def recognize():
     if "user" not in session:
@@ -97,7 +126,6 @@ def add_student():
         name = request.form.get("name").strip()
         department = request.form.get("department").strip()
 
-        # Save student with duplicate ID check
         success, message = save_student(student_id, name, department)
 
         if not success:
@@ -122,7 +150,6 @@ def edit_student(student_id):
         name = request.form.get("name").strip()
         department = request.form.get("department").strip()
         
-        # Process update with duplicate and foreign key handling
         success, message = update_student_with_id_change(student_id, new_student_id, name, department)
         
         if not success:
@@ -235,7 +262,6 @@ def mark_attendance_api():
         if not student_id:
             return jsonify({"success": False, "message": "Missing student ID"}), 400
 
-        # Now we officially mark attendance after the anti-spoofing streak is verified
         marked, msg = mark_attendance_if_allowed(student_id, 1.0)
         return jsonify({"success": marked, "message": msg})
     except Exception as e:
