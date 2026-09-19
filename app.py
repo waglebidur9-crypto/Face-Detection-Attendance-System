@@ -262,10 +262,13 @@ def mark_attendance_api():
     try:
         data = request.get_json()
         student_id = data.get("student_id")
+        # Grab confidence from request, default to 1.0 if missing
+        confidence = data.get("confidence", 1.0)
+        
         if not student_id:
             return jsonify({"success": False, "message": "Missing student ID"}), 400
 
-        marked, msg = mark_attendance_if_allowed(student_id, 1.0)
+        marked, msg = mark_attendance_if_allowed(student_id, confidence)
         return jsonify({"success": marked, "message": msg})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500

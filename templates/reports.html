@@ -185,9 +185,13 @@ function viewStudentDetails(studentId, studentName, startDate, endDate) {
             if(data.success && data.logs.length > 0) {
                 let html = '';
                 data.logs.forEach(log => {
+                    // Safe conversion: handles decimals (0.95 -> 95%) or raw numbers correctly
+                    let rawConf = parseFloat(log.confidence || 0);
+                    let confPercent = rawConf <= 1 ? (rawConf * 100).toFixed(1) : rawConf.toFixed(1);
+
                     html += `<tr>
                         <td><i class="bi bi-clock me-1 text-info"></i>${log.timestamp}</td>
-                        <td class="text-end"><span class="badge bg-success">${log.confidence}%</span></td>
+                        <td class="text-end"><span class="badge bg-success">${confPercent}%</span></td>
                     </tr>`;
                 });
                 tbody.innerHTML = html;

@@ -97,11 +97,14 @@
                             statusAlert.className = "alert alert-warning mt-2 py-2 fw-semibold";
                             statusAlert.innerText = `Verifying ${face.name}... Hold steady (${recognitionStreak[studentId]}/${requiredStreak})`;
                         } else if (recognitionStreak[studentId] === requiredStreak) {
-                            // Streak met! Now officially call backend to mark attendance
+                            // Streak met! Now officially call backend to mark attendance with confidence score
                             let markRes = await fetch('/api/mark_attendance', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ student_id: studentId })
+                                body: JSON.stringify({ 
+                                    student_id: studentId,
+                                    confidence: face.score // Passing the correct face matching score
+                                })
                             });
                             let markData = await markRes.json();
 
