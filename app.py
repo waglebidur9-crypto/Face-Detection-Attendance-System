@@ -176,7 +176,9 @@ def edit_student(student_id):
 def remove_student(student_id):
     if "user" not in session:
         return redirect(url_for("login"))
+    
     delete_student(student_id)
+    flash("Student deleted successfully!", "success")
     return redirect(url_for("students"))
 
 @app.route("/face_register/<student_id>")
