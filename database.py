@@ -20,13 +20,14 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
+    # Ensure tables use InnoDB to support foreign key constraints
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
             username VARCHAR(50) UNIQUE NOT NULL,
             password_hash VARCHAR(255) NOT NULL,
             role VARCHAR(20) DEFAULT 'admin'
-        )
+        ) ENGINE=InnoDB;
     """)
 
     cursor.execute("""
@@ -35,7 +36,7 @@ def init_db():
             name VARCHAR(100) NOT NULL,
             department VARCHAR(100) NOT NULL,
             face_encoding TEXT NULL
-        )
+        ) ENGINE=InnoDB;
     """)
 
     cursor.execute("""
@@ -45,7 +46,13 @@ def init_db():
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
             confidence FLOAT NOT NULL,
             FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
-        )
+        ) ENGINE=InnoDB;
+    """)
+
+    # Clean up any existing orphan attendance records if they were left behind
+    cursor.execute("""
+        DELETE FROM attendance 
+        WHERE student_id NOT IN (SELECT student_id FROM students)
     """)
 
     # --- DEFAULT ADMIN CREATION ---
@@ -271,7 +278,7 @@ def get_dashboard_metrics():
     total_students_res = cursor.fetchone()
     total_students = total_students_res["total"] if total_students_res else 0
     
-    # 2. Unique students present TODAY from the attendance logs table (Fixed to 'timestamp')
+    # 2. Unique students present TODAY from the attendance logs table
     cursor.execute("""
         SELECT COUNT(DISTINCT student_id) as today_count 
         FROM attendance 
