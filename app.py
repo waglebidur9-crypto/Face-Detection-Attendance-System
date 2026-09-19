@@ -432,10 +432,11 @@ def attendance_trend_api():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         
+        # Change 'log_time' below to match your actual database column name (e.g., 'timestamp')
         cursor.execute("""
-            SELECT DATE(log_time) as attendance_date, COUNT(DISTINCT student_id) as total_present
+            SELECT DATE(timestamp) as attendance_date, COUNT(DISTINCT student_id) as total_present
             FROM attendance
-            GROUP BY DATE(log_time)
+            GROUP BY DATE(timestamp)
             ORDER BY attendance_date DESC
             LIMIT 7
         """)

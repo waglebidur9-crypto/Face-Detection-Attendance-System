@@ -271,11 +271,11 @@ def get_dashboard_metrics():
     total_students_res = cursor.fetchone()
     total_students = total_students_res["total"] if total_students_res else 0
     
-    # 2. Unique students present TODAY from the attendance logs table
+    # 2. Unique students present TODAY from the attendance logs table (Fixed to 'timestamp')
     cursor.execute("""
         SELECT COUNT(DISTINCT student_id) as today_count 
         FROM attendance 
-        WHERE DATE(log_time) = CURDATE()
+        WHERE DATE(timestamp) = CURDATE()
     """)
     today_res = cursor.fetchone()
     today_attendance = today_res["today_count"] if today_res else 0
