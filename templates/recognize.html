@@ -1,36 +1,314 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Face Recognition - Attendance System</title>
+    <title>Live Recognition - Attendance System</title>
+    <!-- Flash-prevention script for dark mode -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', savedTheme);
+        })();
+    </script>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+    <!-- Bootstrap Icons CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --sidebar-bg: #0f172a;
+            --main-bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary-accent: #2563eb;
+            --navbar-bg: #ffffff;
+            --navbar-border: #e2e8f0;
+        }
+
+        [data-bs-theme="dark"] {
+            --sidebar-bg: #090d16;
+            --main-bg: #0b0f19;
+            --card-bg: #111827;
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --primary-accent: #3b82f6;
+            --navbar-bg: #111827;
+            --navbar-border: #1f2937;
+        }
+
+        body {
+            background-color: var(--main-bg);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            overflow-x: hidden;
+            transition: background-color 0.3s ease, color 0.3s ease;
+        }
+
+        /* Dashboard Layout Wrapper */
+        .dashboard-wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            color: #9ca3af;
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            bottom: 0;
+            left: 0;
+            z-index: 100;
+            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+            transition: background-color 0.3s ease;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 12px;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .sidebar-menu a {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            color: #9ca3af;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: var(--primary-accent);
+            color: #ffffff;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            margin-left: 260px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top Navbar */
+        .top-navbar {
+            height: 70px;
+            background-color: var(--navbar-bg);
+            border-bottom: 1px solid var(--navbar-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 32px;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .user-profile-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 600;
+            color: var(--text-main);
+            font-size: 0.9rem;
+        }
+
+        /* Content Container */
+        .content-body {
+            padding: 32px;
+        }
+
+        /* Modern Cards */
+        .card-custom {
+            background-color: var(--card-bg);
+            border: 1px solid var(--navbar-border);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        /* Video Kiosk Container */
+        .video-container {
+            position: relative;
+            display: inline-block;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--navbar-border);
+            background-color: #0b0f19;
+            width: 100%;
+            max-width: 640px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+        }
+
+        video {
+            display: block;
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        /* Dark Mode Visibility Adjustments for text & alerts */
+        [data-bs-theme="dark"] .text-dark {
+            color: var(--text-main) !important;
+        }
+
+        [data-bs-theme="dark"] .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        [data-bs-theme="dark"] .alert-info {
+            background-color: #1e3a8a !important;
+            color: #93c5fd !important;
+            border-color: #1d4ed8 !important;
+        }
+
+        [data-bs-theme="dark"] .alert-secondary {
+            background-color: #1e293b !important;
+            color: #cbd5e1 !important;
+            border-color: #334155 !important;
+        }
+
+        [data-bs-theme="dark"] .alert-warning {
+            background-color: #78350f !important;
+            color: #fde68a !important;
+            border-color: #b45309 !important;
+        }
+
+        [data-bs-theme="dark"] .alert-success {
+            background-color: #064e3b !important;
+            color: #a7f3d0 !important;
+            border-color: #047857 !important;
+        }
+
+        [data-bs-theme="dark"] .alert-danger {
+            background-color: #7f1d1d !important;
+            color: #fca5a5 !important;
+            border-color: #b91c1c !important;
+        }
+
+        [data-bs-theme="dark"] .bg-primary-subtle {
+            background-color: rgba(59, 130, 246, 0.15) !important;
+            color: #93c5fd !important;
+        }
+    </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg navbar-dark px-4">
-        <a class="navbar-brand fw-bold text-info" href="{{ url_for('dashboard') }}">⚡ Attendance System</a>
-        <div class="ms-auto">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm">Back to Dashboard</a>
-        </div>
-    </nav>
+    <div class="dashboard-wrapper">
+        
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar" aria-label="Sidebar Navigation">
+            <div class="sidebar-brand">
+                <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+                <span>Attendance System</span>
+            </div>
+            <ul class="sidebar-menu">
+                <li>
+                    <a href="{{ url_for('dashboard') }}">
+                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('students') }}">
+                        <i class="bi bi-people"></i> Students
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('attendance') }}">
+                        <i class="bi bi-calendar-check"></i> Attendance
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('reports') }}">
+                        <i class="bi bi-bar-chart-line"></i> Reports
+                    </a>
+                </li>
+                <li>
+                    <a href="{{ url_for('recognize') }}" class="active">
+                        <i class="bi bi-camera-video-fill"></i> Live Kiosk
+                    </a>
+                </li>
+            </ul>
+        </nav>
 
-    <div class="container mt-5">
-        <div class="row justify-content-center">
-            <div class="col-md-8 text-center">
-                
-                <div class="card-custom">
-                    <h3 class="text-info mb-3">Live Face Recognition</h3>
-                    <p class="text-secondary small">Position your face clearly. Anti-spoofing protection is active.</p>
-
-                    <div class="position-relative d-inline-block rounded overflow-hidden border border-secondary shadow-lg mb-3" style="max-width: 100%;">
-                        <video id="video" autoplay playsinline width="640" height="480" class="w-100 rounded"></video>
-                        <canvas id="canvas" class="d-none"></canvas>
+        <!-- Main Content Wrapper -->
+        <div class="main-content">
+            
+            <!-- Top Navbar -->
+            <header class="top-navbar">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary-subtle border border-primary border-opacity-10 px-3 py-2 fw-semibold">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Anti-Spoofing Active
+                    </span>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <!-- Dark Mode Toggle Button -->
+                    <button id="theme-toggle" class="btn btn-outline-secondary btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Toggle Dark/Light Mode">
+                        <i id="theme-icon" class="bi bi-moon-fill fs-6"></i>
+                    </button>
+                    <div class="user-profile-badge">
+                        <i class="bi bi-person-circle fs-5 text-secondary"></i>
+                        <span>Admin</span>
                     </div>
+                    <div class="vr h-50 my-auto bg-secondary opacity-25"></div>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
+                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                    </a>
+                </div>
+            </header>
 
-                    <div id="status-alert" class="alert alert-info mt-2 py-2 fw-semibold" role="alert">
-                        Initializing Camera...
+            <!-- Page Inner Body -->
+            <div class="content-body">
+                
+                <!-- Page Header -->
+                <div class="mb-4">
+                    <h2 class="fw-bold text-dark mb-1">Live Face Recognition Kiosk</h2>
+                    <p class="text-muted small mb-0">Position your face clearly inside the frame to mark automatic attendance.</p>
+                </div>
+
+                <!-- Recognition Center Card -->
+                <div class="row justify-content-center">
+                    <div class="col-lg-8 text-center">
+                        <div class="card-custom">
+                            
+                            <!-- Video Feed Container -->
+                            <div class="video-container mb-3">
+                                <video id="video" autoplay playsinline width="640" height="480"></video>
+                                <canvas id="canvas" class="d-none"></canvas>
+                            </div>
+
+                            <!-- Live Status Alert Box -->
+                            <div id="status-alert" class="alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm" role="alert">
+                                <i class="bi bi-info-circle-fill me-1"></i> Initializing Camera...
+                            </div>
+
+                        </div>
                     </div>
                 </div>
 
@@ -38,7 +316,34 @@
         </div>
     </div>
 
+    <!-- Script Logic -->
     <script>
+        // Dark Mode Toggle Logic
+        const themeToggleBtn = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+
+        function updateThemeIcon(theme) {
+            if (theme === 'dark') {
+                themeIcon.className = 'bi bi-sun-fill fs-6 text-warning';
+            } else {
+                themeIcon.className = 'bi bi-moon-fill fs-6';
+            }
+        }
+
+        // Initialize icon based on current layout state
+        const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+        updateThemeIcon(currentTheme);
+
+        themeToggleBtn.addEventListener('click', () => {
+            const activeTheme = document.documentElement.getAttribute('data-bs-theme');
+            const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
+            
+            document.documentElement.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        });
+
+        // Face Recognition & Camera Logic
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
@@ -52,12 +357,12 @@
             try {
                 const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
                 video.srcObject = stream;
-                statusAlert.className = "alert alert-info mt-2 py-2 fw-semibold";
-                statusAlert.innerText = "System Ready. Looking for faces...";
+                statusAlert.className = "alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm";
+                statusAlert.innerHTML = '<i class="bi bi-camera-fill me-1"></i> System Ready. Looking for faces...';
             } catch (err) {
                 console.error("Camera access error:", err);
-                statusAlert.className = "alert alert-danger mt-2 py-2 fw-semibold";
-                statusAlert.innerText = "Error: Webcam access denied.";
+                statusAlert.className = "alert alert-danger py-2 px-3 fw-semibold mb-0 shadow-sm";
+                statusAlert.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i> Error: Webcam access denied.';
             }
         }
 
@@ -88,41 +393,39 @@
 
                 if (data.status === "success" && data.faces && data.faces.length > 0) {
                     let face = data.faces[0];
-                    
+                   
                     if (face.student_id) {
                         let studentId = face.student_id;
                         recognitionStreak[studentId] = (recognitionStreak[studentId] || 0) + 1;
 
                         if (recognitionStreak[studentId] < requiredStreak) {
-                            statusAlert.className = "alert alert-warning mt-2 py-2 fw-semibold";
-                            statusAlert.innerText = `Verifying ${face.name}... Hold steady (${recognitionStreak[studentId]}/${requiredStreak})`;
+                            statusAlert.className = "alert alert-warning py-2 px-3 fw-semibold mb-0 shadow-sm";
+                            statusAlert.innerHTML = `<i class="bi bi-hourglass-split me-1"></i> Verifying ${face.name}... Hold steady (${recognitionStreak[studentId]}/${requiredStreak})`;
                         } else if (recognitionStreak[studentId] === requiredStreak) {
-                            // Streak met! Now officially call backend to mark attendance with confidence score
                             let markRes = await fetch('/api/mark_attendance', {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({ 
+                                body: JSON.stringify({
                                     student_id: studentId,
-                                    confidence: face.score // Passing the correct face matching score
+                                    confidence: face.score
                                 })
                             });
                             let markData = await markRes.json();
 
-                            statusAlert.className = `alert ${markData.success ? 'alert-success' : 'alert-warning'} mt-2 py-2 fw-semibold`;
-                            statusAlert.innerText = `${face.name} (ID: ${studentId}) - ${markData.message}`;
+                            statusAlert.className = `alert ${markData.success ? 'alert-success' : 'alert-warning'} py-2 px-3 fw-semibold mb-0 shadow-sm`;
+                            statusAlert.innerHTML = `<i class="bi ${markData.success ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-1"></i> ${face.name} (ID: ${studentId}) - ${markData.message}`;
                             
-                            // Prevent spamming requests for this student for 5 seconds
                             setTimeout(() => { recognitionStreak[studentId] = 0; }, 5000);
                         }
                     } else {
                         recognitionStreak = {};
-                        statusAlert.className = "alert alert-secondary mt-2 py-2 fw-semibold text-light";
-                        statusAlert.innerText = "Unrecognized Face Detected";
+                        statusAlert.className = "alert alert-secondary py-2 px-3 fw-semibold mb-0 shadow-sm";
+                        statusAlert.innerHTML = '<i class="bi bi-person-slash me-1"></i> Unrecognized Face Detected';
                     }
                 } else {
                     recognitionStreak = {};
-                    statusAlert.className = "alert alert-info mt-2 py-2 fw-semibold";
-                    statusAlert.innerText = "Looking for faces...";
+                    statusAlert.className = "alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm";
+                    statusAlert.innerHTML = '<i class="bi bi-search me-1"></i> Looking for faces...';
                 }
             } catch (err) {
                 console.error("Communication error:", err);

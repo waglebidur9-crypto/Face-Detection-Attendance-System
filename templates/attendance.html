@@ -1,19 +1,23 @@
 {% extends "base.html" %}
+
 {% block title %}Daily Attendance{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="m-0 font-weight-bold text-white">Daily Attendance Records</h4>
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="fw-bold mb-1" style="color: inherit !important;">Daily Attendance Records</h2>
+        <p class="text-muted small mb-0">Track daily check-ins, view attendance history, and perform manual overrides.</p>
+    </div>
     
-    <div class="d-flex gap-2 align-items-center">
+    <div class="d-flex gap-2 align-items-center flex-wrap">
         <!-- Manual Override Button -->
-        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+        <button type="button" class="btn btn-outline-warning fw-semibold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
             <i class="bi bi-person-plus me-1"></i> Manual Override
         </button>
 
-        <form action="/attendance" method="GET" class="d-flex gap-2 m-0">
-            <input type="date" name="date" class="form-control form-control-dark" value="{{ selected_date }}" onchange="this.form.submit()">
-            <button type="submit" class="btn btn-outline-info">
+        <form action="/attendance" method="GET" class="d-flex gap-2 m-0 align-items-center">
+            <input type="date" name="date" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" value="{{ selected_date }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-outline-primary fw-semibold px-3 shadow-sm">
                 <i class="bi bi-calendar-check me-1"></i> View Date
             </button>
         </form>
@@ -24,19 +28,22 @@
     <!-- Day Selector Sidebar -->
     <div class="col-md-3 mb-4">
         <div class="card-custom">
-            <h6 class="text-secondary mb-3 fw-bold">Attendance History</h6>
-            <div class="list-group list-group-flush bg-transparent">
+            <h6 class="mb-3 fw-bold border-bottom pb-2" style="color: inherit !important;">Attendance History</h6>
+            <div class="list-group list-group-flush">
                 {% for day in summary %}
-                <a href="/attendance?date={{ day.attendance_date }}" 
-                    class="list-group-item list-group-item-action bg-transparent border-secondary d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active{% endif %}">
+                <a href="/attendance?date={{ day.attendance_date }}"
+                    class="list-group-item list-group-item-action border-0 rounded-2 mb-1 d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active bg-primary text-white{% else %}border-0{% endif %}"
+                    {% if selected_date != day.attendance_date %}style="background-color: rgba(108, 117, 125, 0.08); color: var(--bs-body-color);"{% endif %}>
                     <div>
-                        <i class="bi bi-calendar-event me-2 text-info"></i>
-                        <span class="text-white">{{ day.attendance_date }}</span>
+                        <i class="bi bi-calendar-event me-2 {% if selected_date == day.attendance_date %}text-white{% else %}text-primary{% endif %}"></i>
+                        <span class="fw-semibold">{{ day.attendance_date }}</span>
                     </div>
-                    <span class="badge bg-success rounded-pill">{{ day.total_present }} Present</span>
+                    <span class="badge {% if selected_date == day.attendance_date %}bg-white text-primary{% else %}bg-success-subtle text-success border border-success-subtle{% endif %} rounded-pill">
+                        {{ day.total_present }} Present
+                    </span>
                 </a>
                 {% else %}
-                <div class="text-secondary small">No attendance records logged yet.</div>
+                <div class="text-muted small py-3 text-center">No attendance records logged yet.</div>
                 {% endfor %}
             </div>
         </div>
@@ -46,41 +53,52 @@
     <div class="col-md-9">
         <div class="card-custom">
             <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0 text-info">Logs for {{ selected_date }}</h5>
-                <span class="badge bg-primary fs-6">{{ logs|length }} Total Recorded</span>
+                <h5 class="m-0 fw-bold" style="color: inherit !important;">Logs for {{ selected_date }}</h5>
+                <span class="badge bg-info-subtle text-info border border-info-subtle fs-6 px-3 py-1">
+                    {{ logs|length }} Total Recorded
+                </span>
             </div>
-            
+           
             <div class="table-responsive">
-                <table class="table table-dark-custom align-middle">
+                <table class="table align-middle mb-0">
                     <thead>
                         <tr>
-                            <th style="background-color: #252525 !important; color: #00d2ff !important;">STUDENT ID</th>
-                            <th style="background-color: #252525 !important; color: #00d2ff !important;">NAME</th>
-                            <th style="background-color: #252525 !important; color: #00d2ff !important;">DEPARTMENT</th>
-                            <th style="background-color: #252525 !important; color: #00d2ff !important;">TIME LOGGED</th>
-                            <th style="background-color: #252525 !important; color: #00d2ff !important;">MATCH CONFIDENCE</th>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Department</th>
+                            <th>Time Logged</th>
+                            <th class="text-center">Match Confidence</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for log in logs %}
-                        <tr style="background-color: #1e1e1e !important; color: #ffffff !important;">
-                            <td class="fw-bold" style="background-color: #1e1e1e !important; color: #00d2ff !important;">{{ log.student_id }}</td>
-                            <td class="fw-medium" style="background-color: #1e1e1e !important; color: #ffffff !important;">{{ log.name }}</td>
-                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-secondary">{{ log.department }}</span></td>
-                            <td style="background-color: #1e1e1e !important; color: #ffc107 !important;"><i class="bi bi-clock me-1"></i> {{ log.log_time }}</td>
-                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-success">
-                                {% set raw_conf = log.confidence|float %}
-                                {% if raw_conf <= 1 %}
-                                    {{ "%.1f"|format(raw_conf * 100) }}%
-                                {% else %}
-                                    {{ "%.1f"|format(raw_conf) }}%
-                                {% endif %}
-                            </span></td>
+                        <tr>
+                            <td class="fw-bold text-primary">{{ log.student_id }}</td>
+                            <td class="fw-semibold" style="color: var(--bs-body-color) !important;">{{ log.name }}</td>
+                            <td>
+                                <span class="badge border px-2 py-1" style="background-color: rgba(108, 117, 125, 0.15); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.3) !important;">
+                                    {{ log.department }}
+                                </span>
+                            </td>
+                            <td class="fw-semibold" style="color: var(--bs-body-color) !important;">
+                                <i class="bi bi-clock me-1 text-warning"></i> {{ log.log_time }}
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
+                                    {% set raw_conf = log.confidence|float %}
+                                    {% if raw_conf <= 1 %}
+                                        {{ "%.1f"|format(raw_conf * 100) }}%
+                                    {% else %}
+                                        {{ "%.1f"|format(raw_conf) }}%
+                                    {% endif %}
+                                </span>
+                            </td>
                         </tr>
                         {% else %}
-                        <tr style="background-color: #1e1e1e !important;">
-                            <td colspan="5" class="text-center text-secondary py-4" style="background-color: #1e1e1e !important;">
-                                No student attendance recorded for {{ selected_date }}.
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-5">
+                                <i class="bi bi-folder2-open fs-2 d-block mb-2 text-secondary"></i>
+                                No student attendance recorded for <strong>{{ selected_date }}</strong>.
                             </td>
                         </tr>
                         {% endfor %}
@@ -94,29 +112,33 @@
 <!-- Manual Attendance Modal -->
 <div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content bg-dark text-white border-secondary">
-            <div class="modal-header border-secondary">
-                <h5 class="modal-title text-warning" id="manualModalLabel"><i class="bi bi-shield-exclamation me-1"></i> Manual Attendance Override</h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div class="modal-content border shadow" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
+            <div class="modal-header border-bottom">
+                <h5 class="modal-title fw-bold" style="color: inherit !important;" id="manualModalLabel">
+                    <i class="bi bi-shield-exclamation text-warning me-1"></i> Manual Attendance Override
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body">
+            <div class="modal-body p-4">
                 <form id="manualAttendanceForm">
                     <div class="mb-3">
-                        <label for="manualStudentId" class="form-label text-secondary small fw-bold">Student ID</label>
-                        <input type="text" class="form-control bg-dark text-white border-secondary" id="manualStudentId" placeholder="Enter exact student ID..." required>
+                        <label for="manualStudentId" class="form-label small fw-bold text-muted">Student ID</label>
+                        <input type="text" class="form-control border" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" id="manualStudentId" placeholder="Enter exact student ID..." required>
                     </div>
                     <div class="mb-3">
-                        <label for="manualPassword" class="form-label text-secondary small fw-bold">Admin Password</label>
-                        <input type="password" class="form-control bg-dark text-white border-secondary" id="manualPassword" placeholder="Enter your password to authorize..." required>
+                        <label for="manualPassword" class="form-label small fw-bold text-muted">Admin Password</label>
+                        <input type="password" class="form-control border" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" id="manualPassword" placeholder="Enter your password to authorize..." required>
                     </div>
                     <div id="manualResponseAlert" class="d-none alert py-2 small" role="alert"></div>
-                    <button type="submit" id="submitManualBtn" class="btn btn-warning w-100 fw-bold text-dark">Confirm Manual Check-In</button>
+                    <button type="submit" id="submitManualBtn" class="btn btn-warning w-100 fw-bold text-dark py-2 shadow-sm">Confirm Manual Check-In</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
+{% block extra_js %}
 <script>
 document.getElementById('manualAttendanceForm').addEventListener('submit', function(e) {
     e.preventDefault();
@@ -146,10 +168,9 @@ document.getElementById('manualAttendanceForm').addEventListener('submit', funct
         if(data.success) {
             alertBox.className = 'alert alert-success py-2 small';
             alertBox.innerHTML = data.message;
-            passwordField.value = ''; // Clear password field on success
+            passwordField.value = ''; 
             setTimeout(() => { location.reload(); }, 1200);
         } else {
-            // Highly visible solid button layout with error message
             alertBox.className = 'alert alert-danger py-2 small';
             alertBox.innerHTML = `
                 <div class="d-flex justify-content-between align-items-center">
@@ -177,19 +198,19 @@ function dismissErrorAndClearInput() {
     const alertBox = document.getElementById('manualResponseAlert');
     const inputField = document.getElementById('manualStudentId');
     const passwordField = document.getElementById('manualPassword');
-    
+   
     if (alertBox) {
         alertBox.classList.add('d-none');
         alertBox.innerHTML = '';
     }
     if (inputField) {
-        inputField.value = ''; // Clears the written student ID
+        inputField.value = ''; 
     }
     if (passwordField) {
-        passwordField.value = ''; // Clears the password field
+        passwordField.value = ''; 
     }
     if (inputField) {
-        inputField.focus();    // Focuses back on the student ID input field
+        inputField.focus();    
     }
 }
 </script>
