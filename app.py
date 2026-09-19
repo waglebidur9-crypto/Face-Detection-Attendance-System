@@ -1,8 +1,10 @@
 import base64
+import csv
+import io
 import cv2
 import numpy as np
 from datetime import datetime
-from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session
+from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
 from database import (
     init_db, get_db, save_student, update_student_with_id_change, delete_student,
@@ -257,12 +259,46 @@ def process_frame():
         print(f"Frame processing error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route("/api/manual_attendance", methods=["POST"])
+def manual_attendance_api():
+    if "user" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        data = request.get_json()
+        student_id = data.get("student_id")
+        password = data.get("password")
+        
+        if not student_id or not password:
+            return jsonify({"success": False, "message": "Missing student ID or password"}), 400
+
+        # Verify password for the logged-in user
+        username = session["user"]
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+        user = cursor.fetchone()
+        conn.close()
+
+        if not user or not check_password_hash(user["password_hash"], password):
+            return jsonify({"success": False, "message": "Incorrect password. Override denied."}), 400
+
+        # Proceed to mark attendance if password is correct
+        marked, msg = mark_attendance_if_allowed(student_id, 1.0)
+        if marked:
+            return jsonify({"success": True, "message": "Manual attendance marked successfully!"})
+        else:
+            return jsonify({"success": False, "message": msg})
+            
+    except Exception as e:
+        if "1452" in str(e) or "foreign key constraint fails" in str(e).lower():
+            return jsonify({"success": False, "message": "Error: This Student ID is not registered in the database. Please register the student first."}), 400
+        return jsonify({"success": False, "message": str(e)}), 500
+    
 @app.route("/api/mark_attendance", methods=["POST"])
 def mark_attendance_api():
     try:
         data = request.get_json()
         student_id = data.get("student_id")
-        # Grab confidence from request, default to 1.0 if missing
         confidence = data.get("confidence", 1.0)
         
         if not student_id:
@@ -271,7 +307,53 @@ def mark_attendance_api():
         marked, msg = mark_attendance_if_allowed(student_id, confidence)
         return jsonify({"success": marked, "message": msg})
     except Exception as e:
+        # Catch foreign key constraint failure and display a friendly popup message
+        if "1452" in str(e) or "foreign key constraint fails" in str(e).lower():
+            return jsonify({"success": False, "message": "Error: This Student ID is not registered in the database. Please register the student first."}), 400
         return jsonify({"success": False, "message": str(e)}), 500
+
+@app.route("/api/import_students", methods=["POST"])
+def import_students_api():
+    if "user" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    
+    if "file" not in request.files:
+        return jsonify({"success": False, "message": "No file uploaded"}), 400
+    
+    file = request.files["file"]
+    if file.filename == "":
+        return jsonify({"success": False, "message": "No selected file"}), 400
+    
+    if not file.filename.endswith('.csv'):
+        return jsonify({"success": False, "message": "Please upload a valid CSV file"}), 400
+
+    try:
+        stream = io.TextIOWrapper(file.stream, encoding="utf-8")
+        reader = csv.DictReader(stream)
+        
+        conn = get_db()
+        cursor = conn.cursor()
+        
+        imported_count = 0
+        for row in reader:
+            student_id = row.get("student_id", "").strip()
+            name = row.get("name", "").strip()
+            department = row.get("department", "").strip()
+            
+            if student_id and name:
+                cursor.execute("""
+                    INSERT INTO students (student_id, name, department) 
+                    VALUES (%s, %s, %s) 
+                    ON DUPLICATE KEY UPDATE name=%s, department=%s
+                """, (student_id, name, department, name, department))
+                imported_count += 1
+                
+        conn.commit()
+        conn.close()
+        
+        return jsonify({"success": True, "message": f"Successfully imported {imported_count} student(s)!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": f"Error parsing CSV: {str(e)}"}), 500
 
 @app.route("/api/student_range_logs", methods=["GET"])
 def api_student_range_logs():
@@ -329,7 +411,6 @@ def reports():
         selected_month = current_month
 
     if report_type == "range":
-        # Uses single-row student aggregation per range
         data = get_date_range_student_summary(selected_start, selected_end)
     elif report_type == "monthly":
         data = get_monthly_attendance_summary(selected_year, selected_month)
@@ -345,6 +426,87 @@ def reports():
         year=selected_year,
         month=selected_month
     )
+
+@app.route("/api/attendance_trend", methods=["GET"])
+def attendance_trend_api():
+    if "user" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Fetches actual unique student counts per day from the database
+        cursor.execute("""
+            SELECT DATE(log_time) as attendance_date, COUNT(DISTINCT student_id) as total_present
+            FROM attendance
+            GROUP BY DATE(log_time)
+            ORDER BY attendance_date DESC
+            LIMIT 7
+        """)
+        rows = cursor.fetchall()
+        conn.close()
+
+        # Reverse rows to chronological order (oldest to newest)
+        rows.reverse()
+
+        labels = [str(row["attendance_date"]) for row in rows]
+        data = [row["total_present"] for row in rows]
+
+        return jsonify({
+            "success": True,
+            "labels": labels if labels else ["Today"],
+            "data": data if data else [0]
+        })
+    except Exception as e:
+        print("Error fetching attendance trend:", str(e))
+        return jsonify({"success": False, "message": str(e)}), 500
+    
+@app.route("/export_report", methods=["GET"])
+def export_report():
+    if "user" not in session:
+        return redirect(url_for("login"))
+    
+    report_type = request.args.get("type", "daily")
+    selected_start = request.args.get("start_date", datetime.now().strftime('%Y-%m-%d'))
+    selected_end = request.args.get("end_date", datetime.now().strftime('%Y-%m-%d'))
+    
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+    
+    try:
+        selected_year = int(request.args.get("year", current_year))
+    except (TypeError, ValueError):
+        selected_year = current_year
+
+    try:
+        selected_month = int(request.args.get("month", current_month))
+    except (TypeError, ValueError):
+        selected_month = current_month
+
+    if report_type == "range":
+        data = get_date_range_student_summary(selected_start, selected_end)
+        filename = f"attendance_range_{selected_start}_to_{selected_end}.csv"
+        fieldnames = ["student_id", "name", "department", "total_present"]
+    elif report_type == "monthly":
+        data = get_monthly_attendance_summary(selected_year, selected_month)
+        filename = f"attendance_monthly_{selected_year}_{selected_month}.csv"
+        fieldnames = ["student_id", "name", "department", "total_present"]
+    else:
+        data = get_daily_attendance_summary()
+        filename = "attendance_daily_summary.csv"
+        fieldnames = ["attendance_date", "total_present", "total_scans"]
+
+    si = io.StringIO()
+    writer = csv.DictWriter(si, fieldnames=fieldnames, extrasaction='ignore')
+    writer.writeheader()
+    for row in data:
+        writer.writerow(row)
+        
+    output = si.getvalue()
+    response = make_response(output)
+    response.headers["Content-Disposition"] = f"attachment; filename={filename}"
+    response.headers["Content-Type"] = "text/csv"
+    return response
 
 # --- GLOBAL ERROR HANDLERS TO PREVENT FULL CRASHES ---
 

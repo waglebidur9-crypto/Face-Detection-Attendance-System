@@ -5,12 +5,19 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h4 class="m-0 font-weight-bold text-white">Daily Attendance Records</h4>
     
-    <form action="/attendance" method="GET" class="d-flex gap-2">
-        <input type="date" name="date" class="form-control form-control-dark" value="{{ selected_date }}" onchange="this.form.submit()">
-        <button type="submit" class="btn btn-outline-info">
-            <i class="bi bi-calendar-check me-1"></i> View Date
+    <div class="d-flex gap-2 align-items-center">
+        <!-- Manual Override Button -->
+        <button type="button" class="btn btn-outline-warning" data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
+            <i class="bi bi-person-plus me-1"></i> Manual Override
         </button>
-    </form>
+
+        <form action="/attendance" method="GET" class="d-flex gap-2 m-0">
+            <input type="date" name="date" class="form-control form-control-dark" value="{{ selected_date }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-outline-info">
+                <i class="bi bi-calendar-check me-1"></i> View Date
+            </button>
+        </form>
+    </div>
 </div>
 
 <div class="row">
@@ -21,7 +28,7 @@
             <div class="list-group list-group-flush bg-transparent">
                 {% for day in summary %}
                 <a href="/attendance?date={{ day.attendance_date }}" 
-                   class="list-group-item list-group-item-action bg-transparent border-secondary d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active{% endif %}">
+                    class="list-group-item list-group-item-action bg-transparent border-secondary d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active{% endif %}">
                     <div>
                         <i class="bi bi-calendar-event me-2 text-info"></i>
                         <span class="text-white">{{ day.attendance_date }}</span>
@@ -61,7 +68,14 @@
                             <td class="fw-medium" style="background-color: #1e1e1e !important; color: #ffffff !important;">{{ log.name }}</td>
                             <td style="background-color: #1e1e1e !important;"><span class="badge bg-secondary">{{ log.department }}</span></td>
                             <td style="background-color: #1e1e1e !important; color: #ffc107 !important;"><i class="bi bi-clock me-1"></i> {{ log.log_time }}</td>
-                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-success">{{ "%.1f"|format(log.confidence * 100) }}%</span></td>
+                            <td style="background-color: #1e1e1e !important;"><span class="badge bg-success">
+                                {% set raw_conf = log.confidence|float %}
+                                {% if raw_conf <= 1 %}
+                                    {{ "%.1f"|format(raw_conf * 100) }}%
+                                {% else %}
+                                    {{ "%.1f"|format(raw_conf) }}%
+                                {% endif %}
+                            </span></td>
                         </tr>
                         {% else %}
                         <tr style="background-color: #1e1e1e !important;">
@@ -76,4 +90,107 @@
         </div>
     </div>
 </div>
+
+<!-- Manual Attendance Modal -->
+<div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-warning" id="manualModalLabel"><i class="bi bi-shield-exclamation me-1"></i> Manual Attendance Override</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="manualAttendanceForm">
+                    <div class="mb-3">
+                        <label for="manualStudentId" class="form-label text-secondary small fw-bold">Student ID</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary" id="manualStudentId" placeholder="Enter exact student ID..." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="manualPassword" class="form-label text-secondary small fw-bold">Admin Password</label>
+                        <input type="password" class="form-control bg-dark text-white border-secondary" id="manualPassword" placeholder="Enter your password to authorize..." required>
+                    </div>
+                    <div id="manualResponseAlert" class="d-none alert py-2 small" role="alert"></div>
+                    <button type="submit" id="submitManualBtn" class="btn btn-warning w-100 fw-bold text-dark">Confirm Manual Check-In</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('manualAttendanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const inputField = document.getElementById('manualStudentId');
+    const passwordField = document.getElementById('manualPassword');
+    const studentId = inputField.value.trim();
+    const password = passwordField.value;
+    const alertBox = document.getElementById('manualResponseAlert');
+    const submitBtn = document.getElementById('submitManualBtn');
+
+    if(!studentId || !password) return;
+
+    submitBtn.disabled = true;
+    submitBtn.innerText = 'Verifying...';
+
+    fetch('/api/manual_attendance', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ student_id: studentId, password: password })
+    })
+    .then(response => response.json())
+    .then(data => {
+        alertBox.classList.remove('d-none');
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Confirm Manual Check-In';
+
+        if(data.success) {
+            alertBox.className = 'alert alert-success py-2 small';
+            alertBox.innerHTML = data.message;
+            passwordField.value = ''; // Clear password field on success
+            setTimeout(() => { location.reload(); }, 1200);
+        } else {
+            // Highly visible solid button layout with error message
+            alertBox.className = 'alert alert-danger py-2 small';
+            alertBox.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>${data.message}</span>
+                    <button type="button" class="btn btn-light btn-sm text-dark fw-bold px-3 flex-shrink-0 shadow-sm" onclick="dismissErrorAndClearInput()">Okay</button>
+                </div>
+            `;
+        }
+    })
+    .catch(err => {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Confirm Manual Check-In';
+        alertBox.classList.remove('d-none');
+        alertBox.className = 'alert alert-danger py-2 small';
+        alertBox.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center">
+                <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Network error occurred.</span>
+                <button type="button" class="btn btn-light btn-sm text-dark fw-bold px-3 flex-shrink-0 shadow-sm" onclick="dismissErrorAndClearInput()">Okay</button>
+            </div>
+        `;
+    });
+});
+
+function dismissErrorAndClearInput() {
+    const alertBox = document.getElementById('manualResponseAlert');
+    const inputField = document.getElementById('manualStudentId');
+    const passwordField = document.getElementById('manualPassword');
+    
+    if (alertBox) {
+        alertBox.classList.add('d-none');
+        alertBox.innerHTML = '';
+    }
+    if (inputField) {
+        inputField.value = ''; // Clears the written student ID
+    }
+    if (passwordField) {
+        passwordField.value = ''; // Clears the password field
+    }
+    if (inputField) {
+        inputField.focus();    // Focuses back on the student ID input field
+    }
+}
+</script>
 {% endblock %}
