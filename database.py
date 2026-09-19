@@ -217,7 +217,6 @@ def mark_attendance_if_allowed(student_id, confidence):
         return True, "Attendance logged successfully!"
     except mysql.connector.Error as err:
         conn.close()
-        # MySQL error 1062 handles duplicate unique key violations safely
         if err.errno == 1062:
             return False, "Attendance already marked for today."
         return False, f"Database Error: {str(err)}"
@@ -307,12 +306,10 @@ def get_dashboard_metrics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # 1. Total unique enrolled students from the main students table
     cursor.execute("SELECT COUNT(*) as total FROM students")
     total_students_res = cursor.fetchone()
     total_students = total_students_res["total"] if total_students_res else 0
     
-    # 2. Unique students present TODAY from the attendance logs table
     cursor.execute("""
         SELECT COUNT(DISTINCT student_id) as today_count 
         FROM attendance 
@@ -323,13 +320,12 @@ def get_dashboard_metrics():
     
     conn.close()
     
-    # 3. Calculate overall rate safely to avoid division by zero
     overall_rate = round((today_attendance / total_students * 100) if total_students > 0 else 0, 1)
     
     return {
         "total_students": total_students,
         "today_attendance": today_attendance,
-        "system_accuracy": 98.5,  # Static or dynamic tracker
+        "system_accuracy": 98.5,
         "overall_rate": overall_rate
     }
 
