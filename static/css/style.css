@@ -17,17 +17,18 @@ body {
 
 /* Custom Containers & Cards */
 .card-custom {
-    background-color: #1a1a1a !important;
-    border: 1px solid #2b2b2b;
-    border-radius: 12px;
+    background-color: #161618 !important;
+    border: 1px solid #2a2a2e;
+    border-top: 2px solid #3b82f6;
+    border-radius: 10px;
     padding: 24px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
 }
 
 /* Form Labels */
 .form-label, 
 label {
-    color: #00d2ff !important;
+    color: #93c5fd !important;
     font-weight: 600;
     letter-spacing: 0.5px;
 }
@@ -38,9 +39,9 @@ label {
 input.form-control,
 select.form-control,
 textarea.form-control {
-    background-color: #1e1e1e !important;
+    background-color: #1e1e22 !important;
     color: #ffffff !important;
-    border: 1px solid #444444 !important;
+    border: 1px solid #3f3f46 !important;
     border-radius: 8px;
     padding: 10px 14px;
 }
@@ -50,66 +51,68 @@ textarea.form-control {
 .form-control-dark:focus,
 input.form-control:focus,
 select.form-control:focus {
-    background-color: #262626 !important;
+    background-color: #27272a !important;
     color: #ffffff !important;
-    border-color: #00d2ff !important;
-    box-shadow: 0 0 10px rgba(0, 210, 255, 0.4) !important;
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
 }
 
 /* Form Placeholders */
 .form-control::placeholder,
 input::placeholder,
 textarea::placeholder {
-    color: #888888 !important;
+    color: #71717a !important;
     opacity: 1;
 }
 
 /* Readonly Inputs */
 .form-control[readonly],
 input[readonly] {
-    background-color: #151515 !important;
-    color: #00d2ff !important;
-    border-color: #333333 !important;
+    background-color: #121215 !important;
+    color: #93c5fd !important;
+    border-color: #27272a !important;
     opacity: 0.85;
 }
 
 /* Dropdown Options Contrast */
 select.form-control option {
-    background-color: #1e1e1e !important;
+    background-color: #1e1e22 !important;
     color: #ffffff !important;
 }
 
-/* Buttons & Glowing Effects */
+/* Buttons & Custom Theme Effects */
 .btn-info-glow,
 button[type="submit"],
 .btn-primary {
-    background-color: #00d2ff !important;
-    color: #121212 !important;
+    background-color: #2563eb !important;
+    color: #ffffff !important;
     border: none !important;
-    font-weight: bold !important;
+    font-weight: 500 !important;
+    letter-spacing: 0.3px;
     border-radius: 8px;
-    transition: all 0.3s ease;
+    padding: 8px 16px;
+    transition: background-color 0.2s ease;
 }
 
 .btn-info-glow:hover,
 button[type="submit"]:hover,
 .btn-primary:hover {
-    background-color: #00b3db !important;
-    color: #000000 !important;
-    box-shadow: 0 0 15px rgba(0, 210, 255, 0.6);
+    background-color: #1d4ed8 !important;
+    color: #ffffff !important;
+    box-shadow: none !important;
 }
 
 /* Outline Secondary Buttons (Cancel, etc.) */
 .btn-outline-secondary {
-    color: #b0b0b0 !important;
-    border-color: #444444 !important;
+    color: #a1a1aa !important;
+    border-color: #3f3f46 !important;
     border-radius: 8px;
 }
 
 .btn-outline-secondary:hover {
-    background-color: #2b2b2b !important;
+    background-color: #27272a !important;
     color: #ffffff !important;
-    border-color: #00d2ff !important;
+    border-color: #71717a !important;
 }
 
 /* Browser Autofill Color Overrides (Chrome & Edge) */
@@ -117,14 +120,14 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover, 
 input:-webkit-autofill:focus {
     -webkit-text-fill-color: #ffffff !important;
-    -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1e1e22 inset !important;
     transition: background-color 5000s ease-in-out 0s;
 }
 
 /* Make browser date/time picker calendar icons visible in dark mode */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
-    filter: invert(1) brightness(1.5);
+    filter: invert(0.8) hue-rotate(180deg);
     cursor: pointer;
     opacity: 0.85;
     transition: opacity 0.2s ease;
@@ -133,7 +136,6 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 input[type="date"]::-webkit-calendar-picker-indicator:hover,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
-    filter: invert(1) drop-shadow(0 0 4px #00d2ff);
 }
 
 /* ==========================================
@@ -142,7 +144,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 
 .table-custom,
 .table {
-    background-color: #1a1a1a !important;
+    background-color: #161618 !important;
     color: #e0e0e0 !important;
     border-collapse: separate !important;
     border-spacing: 0;
@@ -153,31 +155,31 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
 /* Table Header */
 .table-custom thead th,
 .table thead th {
-    background-color: #222222 !important;
-    color: #00d2ff !important;
+    background-color: #1e1e22 !important;
+    color: #93c5fd !important;
     text-transform: uppercase;
     font-size: 0.75rem;
     letter-spacing: 1px;
     font-weight: 700;
-    border-bottom: 2px solid #333333 !important;
+    border-bottom: 2px solid #2a2a2e !important;
     padding: 14px 16px;
 }
 
 /* Table Body Cells */
 .table-custom tbody td,
 .table tbody td {
-    background-color: #1a1a1a !important;
+    background-color: #161618 !important;
     color: #ffffff !important;
     padding: 14px 16px;
     vertical-align: middle;
-    border-bottom: 1px solid #2b2b2b !important;
+    border-bottom: 1px solid #222226 !important;
 }
 
 /* Subtle Row Hover Effect */
 .table-custom tbody tr:hover td,
 .table tbody tr:hover td {
-    background-color: #242424 !important;
-    color: #00d2ff !important;
+    background-color: #1f1f23 !important;
+    color: #93c5fd !important;
 }
 
 /* Action Buttons Group Styling inside Tables */
@@ -202,23 +204,23 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
    ========================================== */
 
 .card-hover-effect {
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: 1px solid #2b2b2b !important;
+    transition: transform 0.25s ease, border-color 0.25s ease, background-color 0.25s ease;
+    border: 1px solid #2a2a2e !important;
     cursor: pointer;
 }
 
 .card-hover-effect .card-arrow {
-    transition: transform 0.3s ease, opacity 0.3s ease;
+    transition: transform 0.25s ease, opacity 0.25s ease;
 }
 
 a:hover .card-hover-effect {
-    transform: translateY(-6px);
-    border-color: #00d2ff !important;
-    box-shadow: 0 1rem 2rem rgba(0, 210, 255, 0.12);
-    background-color: #202020 !important;
+    transform: translateY(-4px);
+    border-color: #3b82f6 !important;
+    background-color: #1a1a1f !important;
+    box-shadow: 0 12px 25px -10px rgba(59, 130, 246, 0.15);
 }
 
 a:hover .card-hover-effect .card-arrow {
-    transform: translateX(6px);
+    transform: translateX(5px);
     opacity: 1 !important;
 }

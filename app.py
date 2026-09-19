@@ -3,7 +3,7 @@ import csv
 import io
 import cv2
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
 from database import (
@@ -425,52 +425,71 @@ def reports():
         month=selected_month
     )
 
-@app.route("/api/attendance_trend", methods=["GET"])
-def attendance_trend_api():
-    if "user" not in session:
-        return jsonify({"success": False, "message": "Unauthorized"}), 401
+@app.route('/api/attendance_trend')
+def attendance_trend():
     try:
+        today = datetime.now().date()
+        dates = [(today - timedelta(days=i)) for i in range(6, -1, -1)]
+        date_labels = [d.strftime('%b %d') for d in dates]
+
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
-        
-        cursor.execute("""
-            SELECT DATE(timestamp) as attendance_date, COUNT(DISTINCT student_id) as total_present
-            FROM attendance
-            WHERE timestamp >= CURDATE() - INTERVAL 6 DAY
-            GROUP BY DATE(timestamp)
-            ORDER BY attendance_date ASC
-        """)
-        rows = cursor.fetchall()
+
+        cursor.execute("SELECT DISTINCT department FROM students WHERE department IS NOT NULL AND department != ''")
+        dept_rows = cursor.fetchall()
+        departments = [row['department'] for row in dept_rows]
+        if not departments:
+            departments = ["General"]
+
+        datasets = []
+        colors = ['#58a6ff', '#238636', '#f0883e', '#a371f7', '#db6d28', '#3fb950']
+
+        for index, dept in enumerate(departments):
+            dept_data = []
+            for d in dates:
+                date_str = d.strftime('%Y-%m-%d')
+                cursor.execute("""
+                    SELECT COUNT(*) as cnt 
+                    FROM attendance a 
+                    JOIN students s ON a.student_id = s.student_id 
+                    WHERE s.department = %s AND DATE(a.timestamp) = %s
+                """, (dept, date_str))
+                row = cursor.fetchone()
+                count = row['cnt'] if row else 0
+                dept_data.append(count)
+
+            color = colors[index % len(colors)]
+            datasets.append({
+                "label": dept,
+                "data": dept_data,
+                "borderColor": color,
+                "backgroundColor": color,
+                "borderWidth": 2,
+                "fill": False,
+                "tension": 0.2
+            })
+
         conn.close()
-
-        labels = []
-        data = []
-        for row in rows:
-            d = row["attendance_date"]
-            if hasattr(d, "strftime"):
-                labels.append(d.strftime('%b %d'))
-            else:
-                labels.append(str(d))
-            data.append(row["total_present"])
-
-        if not labels:
-            today_str = datetime.now().strftime('%b %d')
-            labels = [today_str]
-            data = [0]
 
         return jsonify({
             "success": True,
-            "labels": labels,
-            "data": data
+            "labels": date_labels,
+            "datasets": datasets
         })
     except Exception as e:
-        print("Error fetching attendance trend:", str(e))
+        print(f"Error fetching department trend: {e}")
         return jsonify({
-            "success": False,
-            "labels": [datetime.now().strftime('%b %d')],
-            "data": [0]
-        }), 500
-    
+            "success": True, 
+            "labels": ["Today"], 
+            "datasets": [{
+                "label": "General", 
+                "data": [0], 
+                "borderColor": "#58a6ff", 
+                "borderWidth": 2, 
+                "fill": False
+            }]
+        })
+
 @app.route("/export_report", methods=["GET"])
 def export_report():
     if "user" not in session:
