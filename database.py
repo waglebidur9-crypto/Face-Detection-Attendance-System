@@ -6,11 +6,13 @@ import numpy as np
 from datetime import datetime
 
 MYSQL_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', 'root123'),
-    'database': os.environ.get('DB_NAME', 'face_attendance_new_db'),
-    'port': int(os.environ.get('DB_PORT', 3306))
+    'host': os.environ.get('DB_HOST'),
+    'user': os.environ.get('DB_USER'),
+    'password': os.environ.get('DB_PASSWORD'),
+    'database': os.environ.get('DB_NAME', 'defaultdb'),
+    'port': int(os.environ.get('DB_PORT', 27165)),
+    'ssl_disabled': False,
+    'ssl_verify_cert': False
 }
 
 def get_db():
