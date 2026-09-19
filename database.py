@@ -5,20 +5,17 @@ from werkzeug.security import generate_password_hash
 import numpy as np
 from datetime import datetime
 
-# Dynamic configuration to support both local development and cloud deployments (Render, Railway, etc.)
-MYSQL_CONFIG = {
-    'host': os.environ.get('DB_HOST', 'localhost'),
-    'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', ''),
-    'database': os.environ.get('DB_NAME', 'defaultdb'),
-    'port': int(os.environ.get('DB_PORT', 3306)),
-    # Aiven requires SSL, let's pass the SSL settings properly:
-    'ssl_ca': os.environ.get('MYSQL_CA_CERT', None),  # Optional if you add ca.pem
-    'ssl_disabled': False
-}
-
 def get_db():
-    return mysql.connector.connect(**MYSQL_CONFIG)
+    """Lazy-load database connection using fresh environment variables."""
+    return mysql.connector.connect(
+        host=os.environ.get('DB_HOST', 'localhost'),
+        user=os.environ.get('DB_USER', 'root'),
+        password=os.environ.get('DB_PASSWORD', ''),
+        database=os.environ.get('DB_NAME', 'defaultdb'),
+        port=int(os.environ.get('DB_PORT', 3306)),
+        ssl_disabled=os.environ.get('MYSQL_SSL_DISABLED', 'False').lower() == 'true',
+        ssl_verify_cert=False  # Safe for cloud providers like Aiven when ca.pem isn't bundled
+    )
 
 def init_db():
     conn = get_db()
