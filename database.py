@@ -10,9 +10,11 @@ MYSQL_CONFIG = {
     'host': os.environ.get('DB_HOST', 'localhost'),
     'user': os.environ.get('DB_USER', 'root'),
     'password': os.environ.get('DB_PASSWORD', ''),
-    'database': os.environ.get('DB_NAME', 'defaultdb'),  # Updated to match Render 'defaultdb'
+    'database': os.environ.get('DB_NAME', 'defaultdb'),
     'port': int(os.environ.get('DB_PORT', 3306)),
-    'ssl_disabled': os.environ.get('MYSQL_SSL_DISABLED', 'False').lower() == 'true'  # Reads your Render SSL flag[cite: 4]
+    # Aiven requires SSL, let's pass the SSL settings properly:
+    'ssl_ca': os.environ.get('MYSQL_CA_CERT', None),  # Optional if you add ca.pem
+    'ssl_disabled': False
 }
 
 def get_db():
