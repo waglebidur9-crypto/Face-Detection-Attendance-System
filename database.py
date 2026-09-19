@@ -9,9 +9,10 @@ from datetime import datetime
 MYSQL_CONFIG = {
     'host': os.environ.get('DB_HOST', 'localhost'),
     'user': os.environ.get('DB_USER', 'root'),
-    'password': os.environ.get('DB_PASSWORD', 'root123'),
-    'database': os.environ.get('DB_NAME', 'face_attendance_new_db'),
-    'port': int(os.environ.get('DB_PORT', 3306))
+    'password': os.environ.get('DB_PASSWORD', ''),
+    'database': os.environ.get('DB_NAME', 'defaultdb'),  # Updated to match Render 'defaultdb'
+    'port': int(os.environ.get('DB_PORT', 3306)),
+    'ssl_disabled': os.environ.get('MYSQL_SSL_DISABLED', 'False').lower() == 'true'  # Reads your Render SSL flag[cite: 4]
 }
 
 def get_db():
