@@ -433,30 +433,43 @@ def attendance_trend_api():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         
-        # Change 'log_time' below to match your actual database column name (e.g., 'timestamp')
         cursor.execute("""
             SELECT DATE(timestamp) as attendance_date, COUNT(DISTINCT student_id) as total_present
             FROM attendance
+            WHERE timestamp >= CURDATE() - INTERVAL 6 DAY
             GROUP BY DATE(timestamp)
-            ORDER BY attendance_date DESC
-            LIMIT 7
+            ORDER BY attendance_date ASC
         """)
         rows = cursor.fetchall()
         conn.close()
 
-        rows.reverse()
+        labels = []
+        data = []
+        for row in rows:
+            d = row["attendance_date"]
+            if hasattr(d, "strftime"):
+                labels.append(d.strftime('%b %d'))
+            else:
+                labels.append(str(d))
+            data.append(row["total_present"])
 
-        labels = [str(row["attendance_date"]) for row in rows]
-        data = [row["total_present"] for row in rows]
+        if not labels:
+            today_str = datetime.now().strftime('%b %d')
+            labels = [today_str]
+            data = [0]
 
         return jsonify({
             "success": True,
-            "labels": labels if labels else ["Today"],
-            "data": data if data else [0]
+            "labels": labels,
+            "data": data
         })
     except Exception as e:
         print("Error fetching attendance trend:", str(e))
-        return jsonify({"success": False, "message": str(e)}), 500
+        return jsonify({
+            "success": False,
+            "labels": [datetime.now().strftime('%b %d')],
+            "data": [0]
+        }), 500
     
 @app.route("/export_report", methods=["GET"])
 def export_report():

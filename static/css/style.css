@@ -120,6 +120,7 @@ input:-webkit-autofill:focus {
     -webkit-box-shadow: 0 0 0px 1000px #1e1e1e inset !important;
     transition: background-color 5000s ease-in-out 0s;
 }
+
 /* Make browser date/time picker calendar icons visible in dark mode */
 input[type="date"]::-webkit-calendar-picker-indicator,
 input[type="datetime-local"]::-webkit-calendar-picker-indicator {
@@ -134,6 +135,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     opacity: 1;
     filter: invert(1) drop-shadow(0 0 4px #00d2ff);
 }
+
 /* ==========================================
    Modern Dark Table Styles
    ========================================== */
@@ -193,4 +195,30 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
     padding: 6px 10px;
     font-weight: 600;
     letter-spacing: 0.5px;
+}
+
+/* ==========================================
+   Interactive Dashboard Card Enhancements
+   ========================================== */
+
+.card-hover-effect {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid #2b2b2b !important;
+    cursor: pointer;
+}
+
+.card-hover-effect .card-arrow {
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+a:hover .card-hover-effect {
+    transform: translateY(-6px);
+    border-color: #00d2ff !important;
+    box-shadow: 0 1rem 2rem rgba(0, 210, 255, 0.12);
+    background-color: #202020 !important;
+}
+
+a:hover .card-hover-effect .card-arrow {
+    transform: translateX(6px);
+    opacity: 1 !important;
 }
