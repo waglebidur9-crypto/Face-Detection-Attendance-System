@@ -271,7 +271,6 @@ def manual_attendance_api():
         if not student_id or not password:
             return jsonify({"success": False, "message": "Missing student ID or password"}), 400
 
-        # Verify password for the logged-in user
         username = session["user"]
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
@@ -282,7 +281,6 @@ def manual_attendance_api():
         if not user or not check_password_hash(user["password_hash"], password):
             return jsonify({"success": False, "message": "Incorrect password. Override denied."}), 400
 
-        # Proceed to mark attendance if password is correct
         marked, msg = mark_attendance_if_allowed(student_id, 1.0)
         if marked:
             return jsonify({"success": True, "message": "Manual attendance marked successfully!"})
@@ -307,7 +305,6 @@ def mark_attendance_api():
         marked, msg = mark_attendance_if_allowed(student_id, confidence)
         return jsonify({"success": marked, "message": msg})
     except Exception as e:
-        # Catch foreign key constraint failure and display a friendly popup message
         if "1452" in str(e) or "foreign key constraint fails" in str(e).lower():
             return jsonify({"success": False, "message": "Error: This Student ID is not registered in the database. Please register the student first."}), 400
         return jsonify({"success": False, "message": str(e)}), 500
@@ -391,7 +388,7 @@ def reports():
     if "user" not in session:
         return redirect(url_for("login"))
     
-    report_type = request.args.get("type", "daily") # 'daily', 'range', or 'monthly'
+    report_type = request.args.get("type", "daily")
     
     data = []
     selected_start = request.args.get("start_date", datetime.now().strftime('%Y-%m-%d'))
@@ -435,7 +432,6 @@ def attendance_trend_api():
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
         
-        # Fetches actual unique student counts per day from the database
         cursor.execute("""
             SELECT DATE(log_time) as attendance_date, COUNT(DISTINCT student_id) as total_present
             FROM attendance
@@ -446,7 +442,6 @@ def attendance_trend_api():
         rows = cursor.fetchall()
         conn.close()
 
-        # Reverse rows to chronological order (oldest to newest)
         rows.reverse()
 
         labels = [str(row["attendance_date"]) for row in rows]
@@ -508,7 +503,7 @@ def export_report():
     response.headers["Content-Type"] = "text/csv"
     return response
 
-# --- GLOBAL ERROR HANDLERS TO PREVENT FULL CRASHES ---
+# --- GLOBAL ERROR HANDLERS ---
 
 @app.errorhandler(404)
 def not_found_error(error):
