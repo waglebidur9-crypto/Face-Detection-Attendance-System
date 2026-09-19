@@ -18,9 +18,13 @@ from face_engine import FaceEngine
 app = Flask(__name__)
 app.secret_key = "super_secret_face_attendance_key"
 
-# Initialize database tables & clean up remote data on startup
-init_db()
-
+# --- SAFE LAUNCH INITIALIZATION ---
+# This prevents the app from crashing on boot if the cloud database DNS is temporarily unreachable
+try:
+    init_db()
+    print("Database tables initialized successfully!")
+except Exception as e:
+    print(f"WARNING: Initial database migration deferred: {e}")
 
 # Automatically seed default admin account if not already present
 def seed_default_admin():
@@ -37,9 +41,13 @@ def seed_default_admin():
             conn.commit()
         conn.close()
     except Exception as e:
-        print(f"Admin seeding error: {e}")
+        print(f"Admin seeding deferred (Database offline/unreachable): {e}")
 
-seed_default_admin()
+try:
+    seed_default_admin()
+except Exception:
+    pass
+
 engine = FaceEngine()
 
 def base64_to_image(base64_string):
@@ -71,16 +79,20 @@ def login():
         username = request.form.get("username")
         password = request.form.get("password")
         
-        conn = get_db()
-        cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
-        user = cursor.fetchone()
-        conn.close()
+        try:
+            conn = get_db()
+            cursor = conn.cursor(dictionary=True)
+            cursor.execute("SELECT * FROM users WHERE username = %s", (username,))
+            user = cursor.fetchone()
+            conn.close()
 
-        if user and check_password_hash(user["password_hash"], password):
-            session["user"] = user["username"]
-            return redirect(url_for("dashboard"))
-        return render_template("login.html", error="Invalid credentials")
+            if user and check_password_hash(user["password_hash"], password):
+                session["user"] = user["username"]
+                return redirect(url_for("dashboard"))
+        except Exception as e:
+            print(f"Login database error: {e}")
+            
+        return render_template("login.html", error="Invalid credentials or database offline")
     return render_template("login.html")
 
 @app.route("/logout")
@@ -93,7 +105,11 @@ def dashboard():
     if "user" not in session:
         return redirect(url_for("login"))
     
-    metrics = get_dashboard_metrics()
+    try:
+        metrics = get_dashboard_metrics()
+    except Exception as e:
+        print(f"Dashboard metrics error: {e}")
+        metrics = {"total_students": 0, "today_attendance": 0, "system_accuracy": 98.5, "overall_rate": 0}
     
     return render_template(
         "dashboard.html", 
@@ -113,11 +129,15 @@ def recognize():
 def students():
     if "user" not in session:
         return redirect(url_for("login"))
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
-    cursor.execute("SELECT * FROM students")
-    student_list = cursor.fetchall()
-    conn.close()
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
+        cursor.execute("SELECT * FROM students")
+        student_list = cursor.fetchall()
+        conn.close()
+    except Exception as e:
+        print(f"Students fetch error: {e}")
+        student_list = []
     return render_template("students.html", students=student_list)
 
 @app.route("/add_student", methods=["GET", "POST"])
@@ -146,35 +166,39 @@ def edit_student(student_id):
     if "user" not in session:
         return redirect(url_for("login"))
 
-    conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    try:
+        conn = get_db()
+        cursor = conn.cursor(dictionary=True)
 
-    if request.method == "POST":
-        new_student_id = request.form.get("student_id").strip()
-        name = request.form.get("name").strip()
-        department = request.form.get("department").strip()
-        
-        success, message = update_student_with_id_change(student_id, new_student_id, name, department)
-        
-        if not success:
-            flash(message, "danger")
-            cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
-            student = cursor.fetchone()
-            conn.close()
-            return render_template("edit_student.html", student=student)
+        if request.method == "POST":
+            new_student_id = request.form.get("student_id").strip()
+            name = request.form.get("name").strip()
+            department = request.form.get("department").strip()
+            
+            success, message = update_student_with_id_change(student_id, new_student_id, name, department)
+            
+            if not success:
+                flash(message, "danger")
+                cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
+                student = cursor.fetchone()
+                conn.close()
+                return render_template("edit_student.html", student=student)
 
-        flash(message, "success")
+            flash(message, "success")
+            return redirect(url_for("students"))
+
+        cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
+        student = cursor.fetchone()
+        conn.close()
+
+        if not student:
+            flash("Student not found.", "danger")
+            return redirect(url_for("students"))
+
+        return render_template("edit_student.html", student=student)
+    except Exception as e:
+        flash(f"Database error: {str(e)}", "danger")
         return redirect(url_for("students"))
-
-    cursor.execute("SELECT * FROM students WHERE student_id = %s", (student_id,))
-    student = cursor.fetchone()
-    conn.close()
-
-    if not student:
-        flash("Student not found.", "danger")
-        return redirect(url_for("students"))
-
-    return render_template("edit_student.html", student=student)
 
 @app.route("/delete_student/<student_id>", methods=["POST"])
 def remove_student(student_id):
