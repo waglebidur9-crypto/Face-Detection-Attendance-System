@@ -5,12 +5,13 @@ from werkzeug.security import generate_password_hash
 import numpy as np
 from datetime import datetime
 
+# Dynamic configuration to support both local development and cloud deployments (Render, Railway, etc.)
 MYSQL_CONFIG = {
-    'host': 'localhost',
-    'user': 'root',
-    'password': 'root123',
-    'database': 'face_attendance_new_db',
-    'port': 3306
+    'host': os.environ.get('DB_HOST', 'localhost'),
+    'user': os.environ.get('DB_USER', 'root'),
+    'password': os.environ.get('DB_PASSWORD', 'root123'),
+    'database': os.environ.get('DB_NAME', 'face_attendance_new_db'),
+    'port': int(os.environ.get('DB_PORT', 3306))
 }
 
 def get_db():
