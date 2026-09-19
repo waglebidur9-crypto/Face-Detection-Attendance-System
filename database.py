@@ -54,15 +54,41 @@ def init_db():
         WHERE student_id NOT IN (SELECT student_id FROM students)
     """)
 
-    # 2. Safely add foreign key cascade constraint if it doesn't exist yet
+    # 2. Clean up duplicate daily attendance logs (keeping the earliest record)
+    cursor.execute("""
+        DELETE a1 FROM attendance a1
+        JOIN attendance a2 
+        WHERE a1.id > a2.id 
+          AND a1.student_id = a2.student_id 
+          AND DATE(a1.timestamp) = DATE(a2.timestamp)
+    """)
+
+    # 3. Safely add attendance_date column for unique constraints if missing
+    try:
+        cursor.execute("""
+            ALTER TABLE attendance 
+            ADD COLUMN attendance_date DATE GENERATED ALWAYS AS (DATE(timestamp)) STORED
+        """)
+    except Exception:
+        pass
+
+    # 4. Safely add unique constraint to enforce 1 log per student per day
+    try:
+        cursor.execute("""
+            ALTER TABLE attendance 
+            ADD CONSTRAINT unique_student_daily_attendance UNIQUE (student_id, attendance_date)
+        """)
+    except Exception:
+        pass
+
+    # 5. Safely add foreign key cascade constraint if it doesn't exist yet
     try:
         cursor.execute("""
             ALTER TABLE attendance 
             ADD CONSTRAINT fk_student_attendance 
             FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
         """)
-    except Exception as e:
-        # Constraint likely already exists, which is safe to ignore
+    except Exception:
         pass
 
     # --- DEFAULT ADMIN CREATION ---
@@ -175,28 +201,26 @@ def get_all_encodings():
     return result
 
 def mark_attendance_if_allowed(student_id, confidence):
-    """Enforces a strict limit of 1 attendance log per student per day."""
+    """Enforces a strict, database-level unique limit of 1 attendance log per student per day."""
     conn = get_db()
-    cursor = conn.cursor(dictionary=True)
+    cursor = conn.cursor()
     
-    cursor.execute(
-        "SELECT id FROM attendance WHERE student_id = %s AND DATE(timestamp) = CURDATE()",
-        (student_id,)
-    )
-    existing_entry = cursor.fetchone()
-
-    if existing_entry:
-        conn.close()
-        return False, "Attendance already marked for today."
-
     current_time = datetime.now()
-    cursor.execute(
-        "INSERT INTO attendance (student_id, confidence, timestamp) VALUES (%s, %s, %s)",
-        (student_id, float(confidence), current_time)
-    )
-    conn.commit()
-    conn.close()
-    return True, "Attendance logged successfully!"
+    
+    try:
+        cursor.execute(
+            "INSERT INTO attendance (student_id, confidence, timestamp) VALUES (%s, %s, %s)",
+            (student_id, float(confidence), current_time)
+        )
+        conn.commit()
+        conn.close()
+        return True, "Attendance logged successfully!"
+    except mysql.connector.Error as err:
+        conn.close()
+        # MySQL error 1062 handles duplicate unique key violations safely
+        if err.errno == 1062:
+            return False, "Attendance already marked for today."
+        return False, f"Database Error: {str(err)}"
 
 def get_daily_attendance_summary():
     """Returns total attendance counts grouped by date safely formatted for Jinja."""
