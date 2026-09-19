@@ -18,8 +18,9 @@ from face_engine import FaceEngine
 app = Flask(__name__)
 app.secret_key = "super_secret_face_attendance_key"
 
-# Initialize database tables
+# Initialize database tables & clean up remote data on startup
 init_db()
+
 
 # Automatically seed default admin account if not already present
 def seed_default_admin():

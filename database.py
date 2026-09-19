@@ -20,7 +20,7 @@ def init_db():
     conn = get_db()
     cursor = conn.cursor()
     
-    # Ensure tables use InnoDB to support foreign key constraints
+    # Ensure base tables exist using InnoDB
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -44,16 +44,26 @@ def init_db():
             id INT AUTO_INCREMENT PRIMARY KEY,
             student_id VARCHAR(50) NOT NULL,
             timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-            confidence FLOAT NOT NULL,
-            FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+            confidence FLOAT NOT NULL
         ) ENGINE=InnoDB;
     """)
 
-    # Clean up any existing orphan attendance records if they were left behind
+    # 1. Clean up any existing orphan records
     cursor.execute("""
         DELETE FROM attendance 
         WHERE student_id NOT IN (SELECT student_id FROM students)
     """)
+
+    # 2. Safely add foreign key cascade constraint if it doesn't exist yet
+    try:
+        cursor.execute("""
+            ALTER TABLE attendance 
+            ADD CONSTRAINT fk_student_attendance 
+            FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+        """)
+    except Exception as e:
+        # Constraint likely already exists, which is safe to ignore
+        pass
 
     # --- DEFAULT ADMIN CREATION ---
     cursor.execute("SELECT id FROM users WHERE username = 'admin'")
