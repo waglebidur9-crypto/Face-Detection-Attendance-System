@@ -68,11 +68,11 @@
                             <a href="/edit_student/{{ student.student_id }}" class="btn btn-sm btn-outline-warning" title="Edit Student">
                                 <i class="bi bi-pencil-square"></i>
                             </a>
-                            <form action="/delete_student/{{ student.student_id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this student?');" class="d-none d-md-inline">
-                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Student">
-                                    <i class="bi bi-trash-fill"></i>
-                                </button>
-                            </form>
+                            <form action="/delete_student/{{ student.student_id }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this student?');" class="d-inline">
+    <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete Student">
+        <i class="bi bi-trash-fill"></i>
+    </button>
+</form>
                         </div>
                     </td>
                 </tr>
