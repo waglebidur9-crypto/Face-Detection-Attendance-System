@@ -48,7 +48,7 @@ def init_db():
         )
     """)
 
-    # --- ADD THIS BLOCK TO CREATE DEFAULT ADMIN ---
+    # --- DEFAULT ADMIN CREATION ---
     cursor.execute("SELECT id FROM users WHERE username = 'admin'")
     if not cursor.fetchone():
         hashed_password = generate_password_hash('admin123')
@@ -56,7 +56,7 @@ def init_db():
             "INSERT INTO users (username, password_hash, role) VALUES (%s, %s, %s)",
             ('admin', hashed_password, 'admin')
         )
-    # ---------------------------------------------
+    # -----------------------------
 
     conn.commit()
     conn.close()
@@ -65,13 +65,11 @@ def save_student(student_id, name, department):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Check if student ID already exists
     cursor.execute("SELECT student_id FROM students WHERE student_id = %s", (student_id,))
     if cursor.fetchone():
         conn.close()
         return False, "Student ID cannot be same."
 
-    # Insert new student record
     try:
         cursor.execute(
             "INSERT INTO students (student_id, name, department) VALUES (%s, %s, %s)",
@@ -88,7 +86,6 @@ def update_student_with_id_change(old_student_id, new_student_id, name, departme
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Check if the new ID already exists and belongs to a different student
     if old_student_id != new_student_id:
         cursor.execute("SELECT student_id FROM students WHERE student_id = %s", (new_student_id,))
         if cursor.fetchone():
@@ -96,28 +93,22 @@ def update_student_with_id_change(old_student_id, new_student_id, name, departme
             return False, "Student ID cannot be same (already exists for another student)."
 
     try:
-        # Temporarily disable foreign key checks to allow primary/foreign key migration
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
         
         if old_student_id != new_student_id:
-            # Update foreign key references in attendance table first
             cursor.execute("UPDATE attendance SET student_id = %s WHERE student_id = %s", (new_student_id, old_student_id))
-            # Update student primary key and details in students table
             cursor.execute("UPDATE students SET student_id = %s, name = %s, department = %s WHERE student_id = %s", 
                            (new_student_id, name, department, old_student_id))
         else:
-            # ID didn't change, just update name and department normally
             cursor.execute("UPDATE students SET name = %s, department = %s WHERE student_id = %s", 
                            (name, department, old_student_id))
         
-        # Re-enable foreign key checks
         cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
         conn.commit()
         conn.close()
         return True, "Student updated successfully!"
         
     except Exception as e:
-        # Ensure foreign key checks are re-enabled even if an error occurs
         try:
             cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
         except:
@@ -171,7 +162,6 @@ def mark_attendance_if_allowed(student_id, confidence):
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Check if the student has already marked attendance today
     cursor.execute(
         "SELECT id FROM attendance WHERE student_id = %s AND DATE(timestamp) = CURDATE()",
         (student_id,)
@@ -182,7 +172,6 @@ def mark_attendance_if_allowed(student_id, confidence):
         conn.close()
         return False, "Attendance already marked for today."
 
-    # Use Python's datetime.now() to insert the local timestamp
     current_time = datetime.now()
     cursor.execute(
         "INSERT INTO attendance (student_id, confidence, timestamp) VALUES (%s, %s, %s)",
@@ -222,26 +211,71 @@ def get_daily_attendance_summary():
             
     return summary
 
+def get_attendance_by_date_range(start_date, end_date):
+    """Fetch attendance logs between a start and end date."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT 
+            a.id, 
+            a.student_id, 
+            s.name, 
+            s.department, 
+            a.timestamp,
+            a.confidence
+        FROM attendance a
+        JOIN students s ON a.student_id = s.student_id
+        WHERE DATE(a.timestamp) BETWEEN %s AND %s
+        ORDER BY a.timestamp DESC
+    """
+    cursor.execute(query, (start_date, end_date))
+    logs = cursor.fetchall()
+    conn.close()
+    
+    for row in logs:
+        val = row["timestamp"]
+        if val and hasattr(val, "strftime"):
+            row["timestamp"] = val.strftime('%Y-%m-%d %H:%M:%S')
+        elif val:
+            row["timestamp"] = str(val)
+            
+    return logs
+
+def get_monthly_attendance_summary(year, month):
+    """Fetch monthly summary grouped by student for a given year and month."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT 
+            s.student_id, 
+            s.name, 
+            s.department, 
+            COUNT(DISTINCT DATE(a.timestamp)) as total_present
+        FROM students s
+        LEFT JOIN attendance a ON s.student_id = a.student_id 
+               AND YEAR(a.timestamp) = %s AND MONTH(a.timestamp) = %s
+        GROUP BY s.student_id, s.name, s.department
+        ORDER BY total_present DESC
+    """
+    cursor.execute(query, (year, month))
+    summary = cursor.fetchall()
+    conn.close()
+    return summary
+
 def get_dashboard_metrics():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    # Total enrolled students
     cursor.execute("SELECT COUNT(*) as total FROM students")
     total_students = cursor.fetchone()['total']
     
-    # Today's unique attendance count
     cursor.execute("SELECT COUNT(DISTINCT student_id) as count FROM attendance WHERE DATE(timestamp) = CURDATE()")
     today_attendance = cursor.fetchone()['count']
     
-    # Students with registered face profiles
     cursor.execute("SELECT COUNT(*) as registered FROM students WHERE face_encoding IS NOT NULL")
     registered_count = cursor.fetchone()['registered']
     
-    # Calculate System Accuracy (% of students with registered face models)
     system_accuracy = round((registered_count / total_students * 100), 1) if total_students > 0 else 0.0
-    
-    # Calculate Overall Attendance Rate (% of total students present today)
     overall_rate = round((today_attendance / total_students * 100), 1) if total_students > 0 else 0.0
     
     conn.close()
@@ -251,6 +285,50 @@ def get_dashboard_metrics():
         "system_accuracy": system_accuracy,
         "overall_rate": overall_rate
     }
+
+def get_date_range_student_summary(start_date, end_date):
+    """Fetch attendance summary grouped by student for a custom date range."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT 
+            s.student_id, 
+            s.name, 
+            s.department, 
+            COUNT(DISTINCT DATE(a.timestamp)) as total_present
+        FROM students s
+        JOIN attendance a ON s.student_id = a.student_id 
+        WHERE DATE(a.timestamp) BETWEEN %s AND %s
+        GROUP BY s.student_id, s.name, s.department
+        ORDER BY total_present DESC
+    """
+    cursor.execute(query, (start_date, end_date))
+    summary = cursor.fetchall()
+    conn.close()
+    return summary
+
+def get_student_range_logs(student_id, start_date, end_date):
+    """Fetch detailed logs for a specific student within a date range."""
+    conn = get_db()
+    cursor = conn.cursor(dictionary=True)
+    query = """
+        SELECT timestamp, confidence 
+        FROM attendance 
+        WHERE student_id = %s AND DATE(timestamp) BETWEEN %s AND %s
+        ORDER BY timestamp DESC
+    """
+    cursor.execute(query, (student_id, start_date, end_date))
+    logs = cursor.fetchall()
+    conn.close()
+    
+    for row in logs:
+        val = row["timestamp"]
+        if val and hasattr(val, "strftime"):
+            row["timestamp"] = val.strftime('%Y-%m-%d %H:%M:%S')
+        elif val:
+            row["timestamp"] = str(val)
+            
+    return logs
 
 def get_attendance_by_exact_date(selected_date):
     """Fetches detailed student logs for a specific day (YYYY-MM-DD)."""

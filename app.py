@@ -4,11 +4,12 @@ import numpy as np
 from datetime import datetime
 from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session
 from werkzeug.security import check_password_hash, generate_password_hash
-from database import get_dashboard_metrics
 from database import (
     init_db, get_db, save_student, update_student_with_id_change, delete_student,
     update_face_encoding, get_all_encodings, mark_attendance_if_allowed,
-    get_daily_attendance_summary, get_attendance_by_exact_date
+    get_daily_attendance_summary, get_attendance_by_exact_date,
+    get_attendance_by_date_range, get_dashboard_metrics, get_monthly_attendance_summary,
+    get_date_range_student_summary, get_student_range_logs
 )
 from face_engine import FaceEngine
 
@@ -269,6 +270,21 @@ def mark_attendance_api():
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
 
+@app.route("/api/student_range_logs", methods=["GET"])
+def api_student_range_logs():
+    if "user" not in session:
+        return jsonify({"success": False, "message": "Unauthorized"}), 401
+    
+    student_id = request.args.get("student_id")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+    
+    if not student_id or not start_date or not end_date:
+        return jsonify({"success": False, "message": "Missing parameters"}), 400
+        
+    logs = get_student_range_logs(student_id, start_date, end_date)
+    return jsonify({"success": True, "logs": logs})
+
 @app.route("/attendance")
 def attendance():
     if "user" not in session:
@@ -285,13 +301,47 @@ def attendance():
         summary=daily_summary
     )
 
-@app.route("/reports")
+@app.route("/reports", methods=["GET"])
 def reports():
     if "user" not in session:
         return redirect(url_for("login"))
     
-    daily_summary = get_daily_attendance_summary()
-    return render_template("reports.html", summary=daily_summary)
+    report_type = request.args.get("type", "daily") # 'daily', 'range', or 'monthly'
+    
+    data = []
+    selected_start = request.args.get("start_date", datetime.now().strftime('%Y-%m-%d'))
+    selected_end = request.args.get("end_date", datetime.now().strftime('%Y-%m-%d'))
+    
+    current_year = datetime.now().year
+    current_month = datetime.now().month
+
+    try:
+        selected_year = int(request.args.get("year", current_year))
+    except (TypeError, ValueError):
+        selected_year = current_year
+
+    try:
+        selected_month = int(request.args.get("month", current_month))
+    except (TypeError, ValueError):
+        selected_month = current_month
+
+    if report_type == "range":
+        # Uses single-row student aggregation per range
+        data = get_date_range_student_summary(selected_start, selected_end)
+    elif report_type == "monthly":
+        data = get_monthly_attendance_summary(selected_year, selected_month)
+    else:
+        data = get_daily_attendance_summary()
+
+    return render_template(
+        "reports.html",
+        report_type=report_type,
+        data=data,
+        start_date=selected_start,
+        end_date=selected_end,
+        year=selected_year,
+        month=selected_month
+    )
 
 # --- GLOBAL ERROR HANDLERS TO PREVENT FULL CRASHES ---
 
@@ -314,5 +364,6 @@ def handle_unexpected_exception(error):
     if request.path.startswith('/api/'):
         return jsonify({"success": False, "message": f"Unexpected error: {str(error)}"}), 500
     return render_template("login.html", error="Something went wrong. Please try again."), 500
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

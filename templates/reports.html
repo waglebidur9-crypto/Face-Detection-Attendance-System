@@ -3,69 +3,119 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="m-0 font-weight-bold text-white">Attendance Summary Reports</h4>
+    <h4 class="m-0 font-weight-bold text-white">Attendance Analytics & Reports</h4>
     <button onclick="window.print()" class="btn btn-outline-info">
         <i class="bi bi-printer me-1"></i> Print / Export PDF
     </button>
 </div>
 
-<!-- Summary Metrics Row -->
-<div class="row mb-4">
-    <div class="col-md-4">
-        <div class="card-custom text-center py-3">
-            <h6 class="text-secondary text-uppercase small">Total Recorded Days</h6>
-            <h2 class="text-info font-weight-bold m-0">{{ summary|length }}</h2>
+<!-- Filter Control Bar -->
+<div class="card-custom mb-4 p-3" style="background-color: #1e1e1e !important; border-color: #333 !important;">
+    <form method="GET" action="/reports" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="form-label text-secondary small fw-bold">Report Type</label>
+            <select name="type" class="form-select bg-dark text-white border-secondary" onchange="this.form.submit()">
+                <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Daily Summary</option>
+                <option value="range" {% if report_type == 'range' %}selected{% endif %}>Date Range Summary</option>
+                <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Monthly Attendance</option>
+            </select>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-custom text-center py-3">
-            <h6 class="text-secondary text-uppercase small">Total Attendance Logs</h6>
-            <h2 class="text-success font-weight-bold m-0">
-                {% set total_logs = namespace(value=0) %}
-                {% for row in summary %}
-                    {% set total_logs.value = total_logs.value + row.total_scans %}
-                {% endfor %}
-                {{ total_logs.value }}
-            </h2>
+
+        {% if report_type == 'range' %}
+        <div class="col-md-3">
+            <label class="form-label text-secondary small fw-bold">Start Date</label>
+            <input type="date" name="start_date" value="{{ start_date }}" class="form-control bg-dark text-white border-secondary">
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="card-custom text-center py-3">
-            <h6 class="text-secondary text-uppercase small">Latest Active Date</h6>
-            <h2 class="text-warning font-weight-bold m-0">
-                {% if summary and summary|length > 0 %}
-                    {{ summary[0].attendance_date }}
-                {% else %}
-                    N/A
-                {% endif %}
-            </h2>
+        <div class="col-md-3">
+            <label class="form-label text-secondary small fw-bold">End Date</label>
+            <input type="date" name="end_date" value="{{ end_date }}" class="form-control bg-dark text-white border-secondary">
         </div>
-    </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-info w-100 fw-bold"><i class="bi bi-filter me-1"></i> Generate Range</button>
+        </div>
+        {% elif report_type == 'monthly' %}
+        <div class="col-md-3">
+            <label class="form-label text-secondary small fw-bold">Year</label>
+            <input type="number" name="year" value="{{ year }}" class="form-control bg-dark text-white border-secondary">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label text-secondary small fw-bold">Month (1-12)</label>
+            <input type="number" name="month" min="1" max="12" value="{{ month }}" class="form-control bg-dark text-white border-secondary">
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-info w-100 fw-bold"><i class="bi bi-calendar-month me-1"></i> Generate Month</button>
+        </div>
+        {% else %}
+        <div class="col-md-9 text-end">
+            <span class="text-secondary small fst-italic">Viewing general daily logs overview.</span>
+        </div>
+        {% endif %}
+    </form>
 </div>
 
-<!-- Detailed Daily Breakdown Table -->
-<div class="card-custom">
-    <h5 class="text-info mb-3">Daily Attendance Breakdown</h5>
+<!-- Presentation Table -->
+<div class="card-custom" style="background-color: #1e1e1e !important;">
+    <h5 class="text-info mb-3">
+        {% if report_type == 'range' %}
+            Date Range Summary ({{ start_date }} to {{ end_date }})
+        {% elif report_type == 'monthly' %}
+            Monthly Summary for Year {{ year }}, Month {{ month }}
+        {% else %}
+            Daily Attendance Breakdown
+        {% endif %}
+    </h5>
+    
     <div class="table-responsive">
         <table class="table table-dark-custom align-middle">
             <thead>
                 <tr>
+                    {% if report_type == 'range' %}
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">STUDENT ID</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">NAME</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">DEPARTMENT</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important; text-align: center;">TOTAL DAYS PRESENT</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important; text-align: center;">ACTIONS</th>
+                    {% elif report_type == 'monthly' %}
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">STUDENT ID</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">NAME</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important;">DEPARTMENT</th>
+                    <th style="background-color: #252525 !important; color: #00d2ff !important; text-align: center;">TOTAL DAYS PRESENT</th>
+                    {% else %}
                     <th style="background-color: #252525 !important; color: #00d2ff !important;">DATE</th>
                     <th style="background-color: #252525 !important; color: #00d2ff !important;">UNIQUE STUDENTS PRESENT</th>
                     <th style="background-color: #252525 !important; color: #00d2ff !important;">TOTAL SCANS</th>
                     <th style="background-color: #252525 !important; color: #00d2ff !important; text-align: center;">ACTIONS</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody>
-                {% for row in summary %}
+                {% for row in data %}
                 <tr style="background-color: #1e1e1e !important; color: #ffffff !important;">
+                    {% if report_type == 'range' %}
+                    <td class="fw-bold text-info" style="background-color: #1e1e1e !important;">{{ row.student_id }}</td>
+                    <td class="text-white" style="background-color: #1e1e1e !important;">{{ row.name }}</td>
+                    <td style="background-color: #1e1e1e !important;"><span class="badge bg-secondary">{{ row.department }}</span></td>
+                    <td class="text-center" style="background-color: #1e1e1e !important;"><span class="badge bg-success fs-6">{{ row.total_present }} days</span></td>
+                    <td class="text-center" style="background-color: #1e1e1e !important;">
+                        <button class="btn btn-sm btn-outline-info" onclick="viewStudentDetails('{{ row.student_id }}', '{{ row.name }}', '{{ start_date }}', '{{ end_date }}')">
+                            <i class="bi bi-eye me-1"></i> View Details
+                        </button>
+                    </td>
+                    
+                    {% elif report_type == 'monthly' %}
+                    <td class="fw-bold text-info" style="background-color: #1e1e1e !important;">{{ row.student_id }}</td>
+                    <td class="text-white" style="background-color: #1e1e1e !important;">{{ row.name }}</td>
+                    <td style="background-color: #1e1e1e !important;"><span class="badge bg-secondary">{{ row.department }}</span></td>
+                    <td class="text-center" style="background-color: #1e1e1e !important;"><span class="badge bg-success fs-6">{{ row.total_present }} days</span></td>
+                    
+                    {% else %}
                     <td class="fw-bold" style="background-color: #1e1e1e !important; color: #00d2ff !important;">
                         <i class="bi bi-calendar-event me-2"></i>{{ row.attendance_date }}
                     </td>
-                    <td style="background-color: #1e1e1e !important; color: #ffffff !important;">
+                    <td style="background-color: #1e1e1e !important;">
                         <span class="badge bg-success fs-6">{{ row.total_present }} Students</span>
                     </td>
-                    <td style="background-color: #1e1e1e !important; color: #ffffff !important;">
+                    <td style="background-color: #1e1e1e !important;">
                         <span class="badge bg-secondary fs-6">{{ row.total_scans }} Scans</span>
                     </td>
                     <td class="text-center" style="background-color: #1e1e1e !important;">
@@ -73,11 +123,12 @@
                             <i class="bi bi-eye me-1"></i> View Detailed Logs
                         </a>
                     </td>
+                    {% endif %}
                 </tr>
                 {% else %}
                 <tr style="background-color: #1e1e1e !important;">
-                    <td colspan="4" class="text-center text-secondary py-4" style="background-color: #1e1e1e !important;">
-                        No attendance data available to generate reports.
+                    <td colspan="5" class="text-center text-secondary py-4" style="background-color: #1e1e1e !important;">
+                        No records found for the selected timeframe.
                     </td>
                 </tr>
                 {% endfor %}
@@ -85,4 +136,68 @@
         </table>
     </div>
 </div>
+
+<!-- Modal for Student Range Details -->
+<div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-info" id="modalTitle">Attendance Logs</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-secondary small mb-3" id="modalSubtitle"></p>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th class="text-end">Confidence</th>
+                            </tr>
+                        </thead>
+                        <tbody id="modalLogsBody">
+                            <tr><td colspan="2" class="text-center text-secondary">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function viewStudentDetails(studentId, studentName, startDate, endDate) {
+    document.getElementById('modalTitle').innerText = `${studentName} (${studentId})`;
+    document.getElementById('modalSubtitle').innerText = `Logs between ${startDate} and ${endDate}`;
+    
+    const tbody = document.getElementById('modalLogsBody');
+    tbody.innerHTML = `<tr><td colspan="2" class="text-center text-secondary py-3">Loading logs...</td></tr>`;
+    
+    var myModal = new bootstrap.Modal(document.getElementById('studentDetailsModal'));
+    myModal.show();
+    
+    fetch(`/api/student_range_logs?student_id=${studentId}&start_date=${startDate}&end_date=${endDate}`)
+        .then(response => response.json())
+        .then(data => {
+            if(data.success && data.logs.length > 0) {
+                let html = '';
+                data.logs.forEach(log => {
+                    html += `<tr>
+                        <td><i class="bi bi-clock me-1 text-info"></i>${log.timestamp}</td>
+                        <td class="text-end"><span class="badge bg-success">${log.confidence}%</span></td>
+                    </tr>`;
+                });
+                tbody.innerHTML = html;
+            } else {
+                tbody.innerHTML = `<tr><td colspan="2" class="text-center text-secondary py-3">No logs found in this range.</td></tr>`;
+            }
+        })
+        .catch(err => {
+            tbody.innerHTML = `<tr><td colspan="2" class="text-center text-danger py-3">Error loading logs.</td></tr>`;
+        });
+}
+</script>
 {% endblock %}
