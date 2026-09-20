@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Recognition - Attendance System</title>
+    
     <!-- Flash-prevention script for dark mode -->
     <script>
         (function() {
@@ -11,180 +12,29 @@
             document.documentElement.setAttribute('data-bs-theme', savedTheme);
         })();
     </script>
+    
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Unified Custom Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
     <style>
-        :root {
-            --sidebar-bg: #0f172a;
-            --main-bg: #f8fafc;
-            --card-bg: #ffffff;
-            --text-main: #1e293b;
-            --text-muted: #64748b;
-            --primary-accent: #2563eb;
-            --navbar-bg: #ffffff;
-            --navbar-border: #e2e8f0;
-            --neutral-bg: #e2e8f0;
-        }
-
-        [data-bs-theme="dark"] {
-            --sidebar-bg: #090d16;
-            --main-bg: #0b0f19;
-            --card-bg: #111827;
-            --text-main: #f1f5f9;
-            --text-muted: #94a3b8;
-            --primary-accent: #3b82f6;
-            --navbar-bg: #111827;
-            --navbar-border: #1f2937;
-            --neutral-bg: #1e293b;
-        }
-
         body {
-            background-color: var(--main-bg);
-            color: var(--text-main);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            overflow-x: hidden;
-            transition: background-color 0.3s ease, color 0.3s ease;
-            margin: 0;
+            font-family: 'Inter', sans-serif;
         }
-
-        /* Dashboard Layout Wrapper */
-        .dashboard-wrapper {
-            display: flex;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Sidebar Styling */
-        .sidebar {
-            width: 260px;
-            background-color: var(--sidebar-bg);
-            color: #9ca3af;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-            transition: transform 0.3s ease-in-out, background-color 0.3s ease;
-        }
-
-        .sidebar-brand {
-            padding: 24px 20px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .sidebar-menu {
-            list-style: none;
-            padding: 20px 12px;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-
-        .sidebar-menu a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 16px;
-            color: #9ca3af;
-            text-decoration: none;
-            border-radius: 8px;
-            font-size: 0.95rem;
-            font-weight: 500;
-            transition: all 0.2s ease;
-        }
-
-        .sidebar-menu a:hover, .sidebar-menu a.active {
-            background-color: var(--primary-accent);
-            color: #ffffff;
-        }
-
-        /* Main Content Area */
-        .main-content {
-            margin-left: 260px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            min-width: 0;
-            transition: margin-left 0.3s ease-in-out;
-        }
-
-        /* Collapsed State (Triggered via JS Toggle) */
-        .dashboard-wrapper.sidebar-collapsed .sidebar {
-            transform: translateX(-100%);
-        }
-
-        .dashboard-wrapper.sidebar-collapsed .main-content {
-            margin-left: 0;
-        }
-
-        /* Top Navbar */
-        .top-navbar {
-            height: 70px;
-            background-color: var(--navbar-bg);
-            border-bottom: 1px solid var(--navbar-border);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 32px;
-            position: sticky;
-            top: 0;
-            z-index: 99;
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
-        #sidebarToggleBtn {
-            background-color: transparent;
-            border-color: var(--navbar-border);
-            color: var(--text-main);
-        }
-
-        #sidebarToggleBtn:hover {
-            background-color: var(--neutral-bg);
-        }
-
-        .user-profile-badge {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 600;
-            color: var(--text-main);
-            font-size: 0.9rem;
-        }
-
-        /* Content Container */
-        .content-body {
-            padding: 32px;
-        }
-
-        /* Modern Cards */
-        .card-custom {
-            background-color: var(--card-bg);
-            border: 1px solid var(--navbar-border);
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
-            transition: background-color 0.3s ease, border-color 0.3s ease;
-        }
-
+        
         /* Video Kiosk Container */
         .video-container {
             position: relative;
             display: inline-block;
             border-radius: 12px;
             overflow: hidden;
-            border: 1px solid var(--navbar-border);
+            border: 1px solid var(--bs-border-color);
             background-color: #0b0f19;
             width: 100%;
             max-width: 640px;
@@ -198,190 +48,156 @@
             object-fit: cover;
         }
 
-        /* Dark Mode Visibility Adjustments for text & alerts */
-        [data-bs-theme="dark"] .text-dark {
-            color: var(--text-main) !important;
-        }
-
-        [data-bs-theme="dark"] .text-muted {
-            color: var(--text-muted) !important;
-        }
-
-        [data-bs-theme="dark"] .alert-info {
-            background-color: #1e3a8a !important;
-            color: #93c5fd !important;
-            border-color: #1d4ed8 !important;
-        }
-
-        [data-bs-theme="dark"] .alert-secondary {
-            background-color: #1e293b !important;
-            color: #cbd5e1 !important;
-            border-color: #334155 !important;
-        }
-
-        [data-bs-theme="dark"] .alert-warning {
-            background-color: #78350f !important;
-            color: #fde68a !important;
-            border-color: #b45309 !important;
-        }
-
-        [data-bs-theme="dark"] .alert-success {
-            background-color: #064e3b !important;
-            color: #a7f3d0 !important;
-            border-color: #047857 !important;
-        }
-
-        [data-bs-theme="dark"] .alert-danger {
-            background-color: #7f1d1d !important;
-            color: #fca5a5 !important;
-            border-color: #b91c1c !important;
+        .card-custom {
+            background-color: var(--bs-body-bg);
+            border: 1px solid var(--bs-border-color);
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.02);
         }
     </style>
 </head>
-<body>
+<body class="bg-body-tertiary">
 
-    <div class="dashboard-wrapper">
+    <div class="app-wrapper min-vh-100 d-flex flex-column">
         
-        <!-- Sidebar Navigation -->
-        <nav class="sidebar" aria-label="Sidebar Navigation">
-            <div class="sidebar-brand">
-                <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
-                <span>Attendance System</span>
-            </div>
-            <ul class="sidebar-menu">
-                <li>
-                    <a href="{{ url_for('dashboard') }}">
-                        <i class="bi bi-grid-1x2-fill"></i> Dashboard
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('students') }}">
-                        <i class="bi bi-people"></i> Students
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('attendance') }}">
-                        <i class="bi bi-calendar-check"></i> Attendance
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('reports') }}">
-                        <i class="bi bi-bar-chart-line"></i> Reports
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ url_for('recognize') }}" class="active">
-                        <i class="bi bi-camera-video-fill"></i> Live Kiosk
-                    </a>
-                </li>
-            </ul>
-        </nav>
+        <!-- Persistent Top Navbar with Integrated Navigation -->
+        <header class="navbar navbar-expand-lg bg-body border-bottom sticky-top shadow-sm px-3 px-lg-4 py-2">
+            <div class="container-fluid">
+                <!-- Brand / Logo -->
+                <a class="navbar-brand d-flex align-items-center gap-2 me-4" href="{{ url_for('dashboard') }}">
+                    <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+                    <span class="fw-bold fs-6">Attendance System</span>
+                </a>
 
-        <!-- Main Content Wrapper -->
-        <div class="main-content">
-            
-            <!-- Top Navbar -->
-            <header class="top-navbar">
-                <!-- Left Group: Toggle Button & Brand Logo -->
-                <div class="d-flex align-items-center gap-3">
-                    <button id="sidebarToggleBtn" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded" title="Toggle Sidebar" onclick="toggleSidebar()">
-                        <i class="bi bi-list fs-6"></i>
-                    </button>
-                    <div class="d-flex align-items-center gap-2">
-                        <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
-                        <span class="fw-bold fs-6">Attendance System</span>
-                    </div>
-                </div>
+                <!-- Mobile Toggle Button -->
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#topNavbarNav" aria-controls="topNavbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
 
-                <!-- Right Group: Theme Toggle, Profile & Back Action -->
-                <div class="d-flex align-items-center gap-3">
-                    <!-- Dark Mode Toggle Button -->
-                    <button id="theme-toggle" class="btn btn-outline-secondary btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Toggle Dark/Light Mode">
-                        <i id="theme-icon" class="bi bi-moon-fill fs-6"></i>
-                    </button>
+                <!-- Navigation Links & Right Utility Group -->
+                <div class="collapse navbar-collapse justify-content-between" id="topNavbarNav">
                     
-                    <div class="user-profile-badge">
-                        <i class="bi bi-person-circle fs-5 text-secondary"></i>
-                        <span>Admin</span>
-                    </div>
+                    <!-- Navigation Links -->
+                    <ul class="navbar-nav align-items-lg-center gap-1 gap-lg-2 my-2 my-lg-0">
+                        <li class="nav-item">
+                            <a class="nav-link px-3 py-2 rounded-2 fw-semibold {% if request.endpoint == 'dashboard' %}active text-primary bg-primary-subtle{% endif %}" href="{{ url_for('dashboard') }}">
+                                <i class="bi bi-grid-1x2-fill me-1"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3 py-2 rounded-2 fw-semibold {% if request.endpoint in ['students', 'add_student', 'edit_student'] %}active text-primary bg-primary-subtle{% endif %}" href="{{ url_for('students') }}">
+                                <i class="bi bi-people me-1"></i> Students
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3 py-2 rounded-2 fw-semibold {% if request.endpoint == 'attendance' %}active text-primary bg-primary-subtle{% endif %}" href="{{ url_for('attendance') }}">
+                                <i class="bi bi-calendar-check me-1"></i> Attendance
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3 py-2 rounded-2 fw-semibold {% if request.endpoint == 'reports' %}active text-primary bg-primary-subtle{% endif %}" href="{{ url_for('reports') }}">
+                                <i class="bi bi-bar-chart-line me-1"></i> Reports
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link px-3 py-2 rounded-2 fw-semibold {% if request.endpoint == 'recognize' %}active text-primary bg-primary-subtle{% endif %}" href="{{ url_for('recognize') }}">
+                                <i class="bi bi-camera-video-fill me-1"></i> Live Kiosk
+                            </a>
+                        </li>
+                    </ul>
 
-                    <div class="vr h-50 my-auto bg-secondary opacity-25"></div>
+                    <!-- Right Group: Theme Toggle, Profile & Logout / Back Action -->
+                    <div class="navbar-nav align-items-lg-center gap-3 ms-auto pt-2 pt-lg-0 border-top border-lg-0 mt-2 mt-lg-0">
+                        <div class="d-flex align-items-center gap-3">
+                            <button id="themeToggleBtn" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded-circle" title="Toggle Theme" onclick="toggleTheme()">
+                                <i id="themeIcon" class="bi bi-moon-fill fs-6"></i>
+                            </button>
 
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
-                        <i class="bi bi-arrow-left me-1"></i> Dashboard
-                    </a>
-                </div>
-            </header>
-
-            <!-- Page Inner Body -->
-            <div class="content-body">
-                
-                <!-- Page Header -->
-                <div class="mb-4">
-                    <h2 class="fw-bold text-dark mb-1">Live Face Recognition Kiosk</h2>
-                    <p class="text-muted small mb-0">Position your face clearly inside the frame to mark automatic attendance.</p>
-                </div>
-
-                <!-- Recognition Center Card -->
-                <div class="row justify-content-center">
-                    <div class="col-lg-8 text-center">
-                        <div class="card-custom">
+                            <div class="user-profile-badge d-flex align-items-center gap-2">
+                                <i class="bi bi-person-circle fs-5 text-secondary"></i>
+                                <span class="fw-semibold small">Admin</span>
+                            </div>
                             
-                            <!-- Video Feed Container -->
-                            <div class="video-container mb-3">
-                                <video id="video" autoplay playsinline width="640" height="480"></video>
-                                <canvas id="canvas" class="d-none"></canvas>
-                            </div>
-
-                            <!-- Live Status Alert Box -->
-                            <div id="status-alert" class="alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm" role="alert">
-                                <i class="bi bi-info-circle-fill me-1"></i> Initializing Camera...
-                            </div>
-
+                            <div class="vr h-50 my-auto d-none d-lg-block bg-slate-300"></div>
+                            
+                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
+                                <i class="bi bi-arrow-left me-1"></i> Dashboard
+                            </a>
                         </div>
                     </div>
-                </div>
 
+                </div>
             </div>
-        </div>
+        </header>
+
+        <!-- Main Content Body Wrapper -->
+        <main class="container-fluid px-3 px-md-5 py-4 flex-grow-1">
+            
+            <!-- Page Header -->
+            <div class="mb-4 text-center text-md-start">
+                <h2 class="fw-bold mb-1">Live Face Recognition Kiosk</h2>
+                <p class="text-muted small mb-0">Position your face clearly inside the frame to mark automatic attendance.</p>
+            </div>
+
+            <!-- Recognition Center Card -->
+            <div class="row justify-content-center">
+                <div class="col-lg-8 text-center">
+                    <div class="card-custom">
+                        
+                        <!-- Video Feed Container -->
+                        <div class="video-container mb-3">
+                            <video id="video" autoplay playsinline width="640" height="480"></video>
+                            <canvas id="canvas" class="d-none"></canvas>
+                        </div>
+
+                        <!-- Live Status Alert Box -->
+                        <div id="status-alert" class="alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm" role="alert">
+                            <i class="bi bi-info-circle-fill me-1"></i> Initializing Camera...
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </main>
     </div>
 
-    <!-- Script Logic -->
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Theme Toggle Handler Scripts -->
     <script>
-        // Sidebar Toggle Handler
-        function toggleSidebar() {
-            const wrapper = document.querySelector('.dashboard-wrapper');
-            if (wrapper) {
-                wrapper.classList.toggle('sidebar-collapsed');
-            }
-        }
-
-        // Dark Mode Toggle Logic
-        const themeToggleBtn = document.getElementById('theme-toggle');
-        const themeIcon = document.getElementById('theme-icon');
-
         function updateThemeIcon(theme) {
-            if (theme === 'dark') {
-                themeIcon.className = 'bi bi-sun-fill fs-6 text-warning';
-            } else {
-                themeIcon.className = 'bi bi-moon-fill fs-6';
+            const icon = document.getElementById('themeIcon');
+            if (icon) {
+                if (theme === 'dark') {
+                    icon.className = 'bi bi-sun-fill fs-6 text-warning';
+                } else {
+                    icon.className = 'bi bi-moon-fill fs-6';
+                }
             }
         }
 
-        // Initialize icon based on current layout state
-        const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
-        updateThemeIcon(currentTheme);
-
-        themeToggleBtn.addEventListener('click', () => {
-            const activeTheme = document.documentElement.getAttribute('data-bs-theme');
-            const newTheme = activeTheme === 'dark' ? 'light' : 'dark';
-            
-            document.documentElement.setAttribute('data-bs-theme', newTheme);
-            localStorage.setItem('theme', newTheme);
-            updateThemeIcon(newTheme);
+        // Initialize icon state on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            const currentTheme = document.documentElement.getAttribute('data-bs-theme') || 'light';
+            updateThemeIcon(currentTheme);
         });
 
-        // Face Recognition & Camera Logic
+        function toggleTheme() {
+            const htmlEl = document.documentElement;
+            const currentTheme = htmlEl.getAttribute('data-bs-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            htmlEl.setAttribute('data-bs-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+            updateThemeIcon(newTheme);
+        }
+    </script>
+
+    <!-- Face Recognition & Camera Logic Script -->
+    <script>
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');

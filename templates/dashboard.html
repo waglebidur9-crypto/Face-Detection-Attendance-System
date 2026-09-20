@@ -14,19 +14,19 @@
         <h2 class="fw-bold text-body mb-1">Dashboard</h2>
         <p class="text-muted small mb-0">Welcome back, Admin! Here's an overview of your attendance system.</p>
     </div>
-    <div>
-        <a href="{{ url_for('recognize') }}" class="btn btn-primary px-3 px-md-4 py-2 fw-semibold shadow-sm text-nowrap">
+    <div class="w-100 w-sm-auto">
+        <a href="{{ url_for('recognize') }}" class="btn btn-primary px-3 px-md-4 py-2 fw-semibold shadow-sm text-nowrap w-100">
             <i class="bi bi-camera-video-fill me-2"></i> Launch Live Kiosk
         </a>
     </div>
 </div>
 
-<!-- Metrics Overview Cards -->
+<!-- Metrics Overview Cards (Responsive grid for mobile/tablet/desktop) -->
 <div class="row g-3 mb-4">
-    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="metric-title">Total Enrolled Students</span>
+                <span class="metric-title text-muted fw-semibold small">Total Enrolled Students</span>
                 <div class="bg-primary-subtle text-primary p-2 rounded-2"><i class="bi bi-people fs-6"></i></div>
             </div>
             <h2 class="fw-bold text-body mb-1">{{ total_students }}</h2>
@@ -34,10 +34,10 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="metric-title">Today's Attendance</span>
+                <span class="metric-title text-muted fw-semibold small">Today's Attendance</span>
                 <div class="bg-success-subtle text-success p-2 rounded-2"><i class="bi bi-calendar-day fs-6"></i></div>
             </div>
             <h2 class="fw-bold text-body mb-1">{{ today_attendance }}</h2>
@@ -45,27 +45,27 @@
         </div>
     </div>
     
-    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="metric-title">System Accuracy</span>
+                <span class="metric-title text-muted fw-semibold small">System Accuracy</span>
                 <div class="bg-warning-subtle text-warning p-2 rounded-2"><i class="bi bi-shield-check fs-6"></i></div>
             </div>
             <h2 class="fw-bold text-body mb-1">{{ system_accuracy }}%</h2>
-            <div class="progress mt-2" style="height: 6px; background-color: var(--border-color);">
+            <div class="progress mt-2" style="height: 6px; background-color: var(--bs-border-color);">
                 <div class="progress-bar bg-warning" role="progressbar" style="width: {{ system_accuracy }}%;" aria-valuenow="{{ system_accuracy }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
     </div>
     
-    <div class="col-xl-3 col-lg-6 col-md-6 col-sm-6">
+    <div class="col-12 col-sm-6 col-xl-3">
         <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
             <div class="d-flex align-items-center justify-content-between mb-2">
-                <span class="metric-title">Overall Rate</span>
+                <span class="metric-title text-muted fw-semibold small">Overall Rate</span>
                 <div class="bg-info-subtle text-info p-2 rounded-2"><i class="bi bi-graph-up-arrow fs-6"></i></div>
             </div>
             <h2 class="fw-bold text-body mb-1">{{ overall_rate }}%</h2>
-            <div class="progress mt-2" style="height: 6px; background-color: var(--border-color);">
+            <div class="progress mt-2" style="height: 6px; background-color: var(--bs-border-color);">
                 <div class="progress-bar bg-primary" role="progressbar" style="width: {{ overall_rate }}%;" aria-valuenow="{{ overall_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
             </div>
         </div>
@@ -92,7 +92,7 @@
 
 <!-- Quick Navigation / Management Modules -->
 <div class="row g-3">
-    <div class="col-lg-4 col-md-6">
+    <div class="col-12 col-md-6 col-lg-4">
         <a href="{{ url_for('students') }}" class="nav-card-link text-decoration-none">
             <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
                 <div>
@@ -109,7 +109,7 @@
         </a>
     </div>
 
-    <div class="col-lg-4 col-md-6">
+    <div class="col-12 col-md-6 col-lg-4">
         <a href="{{ url_for('attendance') }}" class="nav-card-link text-decoration-none">
             <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
                 <div>
@@ -126,7 +126,7 @@
         </a>
     </div>
 
-    <div class="col-lg-4 col-md-12">
+    <div class="col-12 col-md-12 col-lg-4">
         <a href="{{ url_for('reports') }}" class="nav-card-link text-decoration-none">
             <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
                 <div>
@@ -146,7 +146,7 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- Chart.js Script Initialization with Toggle Support -->
+<!-- Chart.js Script Initialization with Real-time Theme Adaptation -->
 <script>
 let departmentTrendChart = null;   
 let currentChartType = 'line';   
@@ -184,17 +184,24 @@ document.addEventListener("DOMContentLoaded", function() {
                         labels: {
                             color: isDark ? '#cbd5e1' : '#334155',
                             boxWidth: 14,
-                            font: { family: 'inherit', size: 12, weight: '600' }
+                            font: { family: 'Inter', size: 12, weight: '600' }
                         }
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                        bodyColor: isDark ? '#cbd5e1' : '#475569',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1
                     }
                 },
                 scales: {
                     x: {
-                        grid: { color: isDark ? '#1e293b' : '#e2e8f0' },
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)' },
                         ticks: { color: isDark ? '#94a3b8' : '#475569', font: { weight: '500' } }
                     },
                     y: {
-                        grid: { color: isDark ? '#1e293b' : '#e2e8f0' },
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)' },
                         ticks: { color: isDark ? '#94a3b8' : '#475569', precision: 0, font: { weight: '500' } },
                         beginAtZero: true
                     }
@@ -219,6 +226,17 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     }
 
+    // Auto-re-render chart instantly if user toggles theme mode
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-bs-theme' && cachedChartLabels.length > 0) {
+                renderDepartmentChart(cachedChartLabels, cachedChartDatasets);
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+
+    // Fetch live trend dataset from backend
     fetch('/api/attendance_trend')
         .then(response => response.json())
         .then(res => {
@@ -228,8 +246,8 @@ document.addEventListener("DOMContentLoaded", function() {
                 renderDepartmentChart(['Today'], [{
                     label: 'General',
                     data: [0],
-                    borderColor: '#2563eb',
-                    backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
                     borderWidth: 2,
                     fill: false
                 }]);
@@ -240,8 +258,8 @@ document.addEventListener("DOMContentLoaded", function() {
             renderDepartmentChart(['Today'], [{
                 label: 'General',
                 data: [0],
-                borderColor: '#2563eb',
-                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
                 borderWidth: 2,
                 fill: false
             }]);
