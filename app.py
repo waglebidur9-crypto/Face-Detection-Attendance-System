@@ -129,16 +129,28 @@ def recognize():
 def students():
     if "user" not in session:
         return redirect(url_for("login"))
+    
+    search_query = request.args.get('q', '').strip()
+    
     try:
         conn = get_db()
         cursor = conn.cursor(dictionary=True)
-        cursor.execute("SELECT * FROM students")
+        
+        if search_query:
+            # Search by name or student_id
+            query = "SELECT * FROM students WHERE name LIKE %s OR student_id LIKE %s ORDER BY name ASC"
+            like_term = f"%{search_query}%"
+            cursor.execute(query, (like_term, like_term))
+        else:
+            cursor.execute("SELECT * FROM students ORDER BY name ASC")
+            
         student_list = cursor.fetchall()
         conn.close()
     except Exception as e:
         print(f"Students fetch error: {e}")
         student_list = []
-    return render_template("students.html", students=student_list)
+        
+    return render_template("students.html", students=student_list, search_query=search_query)
 
 @app.route("/add_student", methods=["GET", "POST"])
 def add_student():

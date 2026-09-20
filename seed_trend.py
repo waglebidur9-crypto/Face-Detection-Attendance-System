@@ -1,31 +1,38 @@
-from datetime import datetime, timedelta, time
+import os
 import random
-from database import get_db, init_db
+import mysql.connector
+from datetime import datetime, timedelta, time
 
-def seed_mock_attendance():
-    # Ensure database tables exist first
-    init_db()
-    
+def get_db():
+    return mysql.connector.connect(
+        host=os.environ.get('DB_HOST', 'altaria.proxy.rlwy.net'),
+        user=os.environ.get('DB_USER', 'root'),
+        password=os.environ.get('DB_PASSWORD', 'rXllXrZeeROURwlmiXfazokKquxkxrgo'),
+        database=os.environ.get('DB_NAME', 'railway'),
+        port=int(os.environ.get('DB_PORT', 29150)),
+        ssl_disabled=os.environ.get('MYSQL_SSL_DISABLED', 'False').lower() == 'true',
+        ssl_verify_cert=False
+    )
+
+def seed_trend_data():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
     
-    print("🧹 Force-clearing old student and attendance records for a fresh start...")
-    # Disable foreign key checks temporarily to clear cleanly
+    print("🧹 Force-clearing old student and attendance records for a clean slate...")
     cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
     cursor.execute("DELETE FROM attendance")
     cursor.execute("DELETE FROM students")
     cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
     conn.commit()
 
-    print("ℹ️ Inserting 50 new student records with your app's exact departments...")
+    print("ℹ️ Inserting 30 new student records across your app's departments...")
     
-    # Exact departments from your actual application
+    # Aligned with your form dropdown choices
     departments = [
-        "Computer Science", 
-        "Electronics", 
         "BCA", 
-        "B.Sc. CSIT", 
-        "BBA"
+        "BSc.CSIT", 
+        "BIM", 
+        "BBIT"
     ]
     
     first_names = [
@@ -33,9 +40,7 @@ def seed_mock_attendance():
         "Mia", "Ethan", "Harper", "Mason", "Evelyn", "Logan", "Abigail", 
         "Alexander", "Emily", "Benjamin", "Charlotte", "Elijah", "Amelia", 
         "Oliver", "Isabella", "William", "Harper", "Daniel", "Luna", "Henry", 
-        "Camila", "Aiden", "Gianna", "Matthew", "Elizabeth", "Jackson", "Ella", 
-        "Sebastian", "Sofia", "David", "Avery", "Carter", "Scarlett", "Wyatt", 
-        "Victoria", "Jayden", "Aria", "Gabriel", "Grace", "Julian", "Chloe", "Nathan"
+        "Camila", "Aiden"
     ]
     
     last_names = [
@@ -43,14 +48,11 @@ def seed_mock_attendance():
         "Garcia", "Rodriguez", "Wilson", "Martinez", "Anderson", "Taylor", 
         "Thomas", "Hernandez", "Moore", "Martin", "Jackson", "Thompson", "White", 
         "Lopez", "Lee", "Gonzalez", "Harris", "Clark", "Lewis", "Robinson", 
-        "Walker", "Perez", "Hall", "Young", "Allen", "Sanchez", "Wright", 
-        "King", "Scott", "Green", "Baker", "Adams", "Nelson", "Hill", 
-        "Ramirez", "Campbell", "Mitchell", "Roberts", "Carter", "Phillips", 
-        "Evans", "Turner", "Torres"
+        "Walker", "Perez", "Hall"
     ]
 
     mock_students = []
-    for i in range(1, 51):
+    for i in range(1, 31):
         s_id = f"STU2026{i:03d}"
         name = f"{first_names[i-1]} {last_names[i-1]}"
         dept = departments[(i - 1) % len(departments)]
@@ -63,26 +65,29 @@ def seed_mock_attendance():
         )
     conn.commit()
     
-    # Fetch the newly inserted students
+    # Fetch the newly inserted students back
     cursor.execute("SELECT student_id, department FROM students")
     students = cursor.fetchall()
 
     today = datetime.now().date()
-    print("⏳ Generating varied attendance records for the past 7 days...")
+    print("⏳ Generating attendance records and trends for the past 30 days...")
 
-    # Loop through the last 7 days to create distinct trends per day
-    for i in range(6, -1, -1):
-        d = today - timedelta(days=i)
+    # Loop through the last 30 days (skipping Sundays)
+    for day_offset in range(30, 0, -1):
+        d = today - timedelta(days=day_offset)
         
-        # Randomize how many students show up each day (e.g., between 25 and 45 out of 50)
-        daily_count = random.randint(25, 45)
+        if d.weekday() == 6:  # Skip Sundays
+            continue
+            
+        # Randomize how many students show up each day (between 18 and 28 out of 30)
+        daily_count = random.randint(18, 28)
         attending_students = random.sample(students, k=daily_count)
         
         for s in attending_students:
             hour = random.randint(8, 16)
             minute = random.randint(0, 59)
             timestamp = datetime.combine(d, time(hour, minute))
-            confidence = round(random.uniform(0.85, 0.99), 2)
+            confidence = round(random.uniform(85.0, 99.0), 2)
             
             try:
                 cursor.execute(
@@ -93,11 +98,12 @@ def seed_mock_attendance():
                     (s['student_id'], timestamp, confidence)
                 )
             except Exception:
-                pass
+                pass  # Ignore duplicate constraints if any overlap occurs
 
     conn.commit()
+    cursor.close()
     conn.close()
-    print("✅ Successfully generated 50 students and fresh attendance records!")
+    print("✅ Successfully generated 30 students and 30 days of comprehensive cloud attendance data!")
 
 if __name__ == "__main__":
-    seed_mock_attendance()
+    seed_trend_data()
