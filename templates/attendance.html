@@ -1,39 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}Daily Attendance{% endblock %}
+{% block title %}Daily Attendance - Attendance System{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+<div class="d-flex justify-content-between align-items-lg-center mb-4 flex-column flex-lg-row gap-3">
     <div>
-        <h2 class="fw-bold mb-1" style="color: inherit !important;">Daily Attendance Records</h2>
+        <h2 class="fw-bold mb-1 h3 text-body">Daily Attendance Records</h2>
         <p class="text-muted small mb-0">Track daily check-ins, view attendance history, and perform manual overrides.</p>
     </div>
     
-    <div class="d-flex gap-2 align-items-center flex-wrap">
+    <div class="d-flex gap-2 align-items-stretch align-items-sm-center flex-column flex-sm-row">
         <!-- Manual Override Button -->
         <button type="button" class="btn btn-outline-warning fw-semibold px-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#manualAttendanceModal">
             <i class="bi bi-person-plus me-1"></i> Manual Override
         </button>
 
-        <form action="/attendance" method="GET" class="d-flex gap-2 m-0 align-items-center">
-            <input type="date" name="date" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" value="{{ selected_date }}" onchange="this.form.submit()">
-            <button type="submit" class="btn btn-outline-primary fw-semibold px-3 shadow-sm">
+        <form action="{{ url_for('attendance') }}" method="GET" class="d-flex gap-2 m-0 align-items-center">
+            <input type="date" name="date" class="form-control border shadow-sm bg-body text-body" value="{{ selected_date }}" onchange="this.form.submit()">
+            <button type="submit" class="btn btn-outline-primary fw-semibold px-3 shadow-sm text-nowrap">
                 <i class="bi bi-calendar-check me-1"></i> View Date
             </button>
         </form>
     </div>
 </div>
 
-<div class="row">
+<div class="row g-4">
     <!-- Day Selector Sidebar -->
-    <div class="col-md-3 mb-4">
-        <div class="card-custom">
-            <h6 class="mb-3 fw-bold border-bottom pb-2" style="color: inherit !important;">Attendance History</h6>
-            <div class="list-group list-group-flush">
+    <div class="col-12 col-lg-3">
+        <div class="card-custom h-100">
+            <h6 class="mb-3 fw-bold border-bottom pb-2 text-body">Attendance History</h6>
+            <div class="list-group list-group-flush overflow-auto" style="max-height: 450px;">
                 {% for day in summary %}
-                <a href="/attendance?date={{ day.attendance_date }}"
-                    class="list-group-item list-group-item-action border-0 rounded-2 mb-1 d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active bg-primary text-white{% else %}border-0{% endif %}"
-                    {% if selected_date != day.attendance_date %}style="background-color: rgba(108, 117, 125, 0.08); color: var(--bs-body-color);"{% endif %}>
+                <a href="{{ url_for('attendance', date=day.attendance_date) }}"
+                    class="list-group-item list-group-item-action border-0 rounded-2 mb-1 d-flex justify-content-between align-items-center {% if selected_date == day.attendance_date %}active bg-primary text-white{% else %}bg-body-secondary text-body border-0{% endif %}">
                     <div>
                         <i class="bi bi-calendar-event me-2 {% if selected_date == day.attendance_date %}text-white{% else %}text-primary{% endif %}"></i>
                         <span class="fw-semibold">{{ day.attendance_date }}</span>
@@ -50,40 +49,40 @@
     </div>
 
     <!-- Student Attendance List for Selected Date -->
-    <div class="col-md-9">
-        <div class="card-custom">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <h5 class="m-0 fw-bold" style="color: inherit !important;">Logs for {{ selected_date }}</h5>
+    <div class="col-12 col-lg-9">
+        <div class="card-custom h-100">
+            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+                <h5 class="m-0 fw-bold fs-5 text-body">Logs for {{ selected_date }}</h5>
                 <span class="badge bg-info-subtle text-info border border-info-subtle fs-6 px-3 py-1">
                     {{ logs|length }} Total Recorded
                 </span>
             </div>
            
             <div class="table-responsive">
-                <table class="table align-middle mb-0">
+                <table class="table align-middle mb-0 text-body">
                     <thead>
                         <tr>
-                            <th>Student ID</th>
-                            <th>Name</th>
-                            <th>Department</th>
-                            <th>Time Logged</th>
-                            <th class="text-center">Match Confidence</th>
+                            <th class="text-nowrap text-body">Student ID</th>
+                            <th class="text-nowrap text-body">Name</th>
+                            <th class="text-nowrap text-body">Department</th>
+                            <th class="text-nowrap text-body">Time Logged</th>
+                            <th class="text-center text-nowrap text-body">Match Confidence</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for log in logs %}
                         <tr>
-                            <td class="fw-bold text-primary">{{ log.student_id }}</td>
-                            <td class="fw-semibold" style="color: var(--bs-body-color) !important;">{{ log.name }}</td>
-                            <td>
-                                <span class="badge border px-2 py-1" style="background-color: rgba(108, 117, 125, 0.15); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.3) !important;">
+                            <td class="fw-bold text-primary text-nowrap">{{ log.student_id }}</td>
+                            <td class="fw-semibold text-nowrap text-body">{{ log.name }}</td>
+                            <td class="text-nowrap">
+                                <span class="badge border px-2 py-1 bg-body-secondary text-body border-secondary">
                                     {{ log.department }}
                                 </span>
                             </td>
-                            <td class="fw-semibold" style="color: var(--bs-body-color) !important;">
+                            <td class="fw-semibold text-nowrap text-body">
                                 <i class="bi bi-clock me-1 text-warning"></i> {{ log.log_time }}
                             </td>
-                            <td class="text-center">
+                            <td class="text-center text-nowrap">
                                 <span class="badge bg-success-subtle text-success border border-success-subtle px-2 py-1">
                                     {% set raw_conf = log.confidence|float %}
                                     {% if raw_conf <= 1 %}
@@ -111,10 +110,10 @@
 
 <!-- Manual Attendance Modal -->
 <div class="modal fade" id="manualAttendanceModal" tabindex="-1" aria-labelledby="manualModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border shadow" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border shadow bg-body text-body">
             <div class="modal-header border-bottom">
-                <h5 class="modal-title fw-bold" style="color: inherit !important;" id="manualModalLabel">
+                <h5 class="modal-title fw-bold fs-5 text-body" id="manualModalLabel">
                     <i class="bi bi-shield-exclamation text-warning me-1"></i> Manual Attendance Override
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -123,11 +122,11 @@
                 <form id="manualAttendanceForm">
                     <div class="mb-3">
                         <label for="manualStudentId" class="form-label small fw-bold text-muted">Student ID</label>
-                        <input type="text" class="form-control border" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" id="manualStudentId" placeholder="Enter exact student ID..." required>
+                        <input type="text" class="form-control border bg-body text-body" id="manualStudentId" placeholder="Enter exact student ID..." required>
                     </div>
                     <div class="mb-3">
                         <label for="manualPassword" class="form-label small fw-bold text-muted">Admin Password</label>
-                        <input type="password" class="form-control border" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" id="manualPassword" placeholder="Enter your password to authorize..." required>
+                        <input type="password" class="form-control border bg-body text-body" id="manualPassword" placeholder="Enter your password to authorize..." required>
                     </div>
                     <div id="manualResponseAlert" class="d-none alert py-2 small" role="alert"></div>
                     <button type="submit" id="submitManualBtn" class="btn btn-warning w-100 fw-bold text-dark py-2 shadow-sm">Confirm Manual Check-In</button>
@@ -140,78 +139,78 @@
 
 {% block extra_js %}
 <script>
-document.getElementById('manualAttendanceForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const inputField = document.getElementById('manualStudentId');
-    const passwordField = document.getElementById('manualPassword');
-    const studentId = inputField.value.trim();
-    const password = passwordField.value;
-    const alertBox = document.getElementById('manualResponseAlert');
-    const submitBtn = document.getElementById('submitManualBtn');
+    document.getElementById('manualAttendanceForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const inputField = document.getElementById('manualStudentId');
+        const passwordField = document.getElementById('manualPassword');
+        const studentId = inputField.value.trim();
+        const password = passwordField.value;
+        const alertBox = document.getElementById('manualResponseAlert');
+        const submitBtn = document.getElementById('submitManualBtn');
 
-    if(!studentId || !password) return;
+        if(!studentId || !password) return;
 
-    submitBtn.disabled = true;
-    submitBtn.innerText = 'Verifying...';
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Verifying...';
 
-    fetch('/api/manual_attendance', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ student_id: studentId, password: password })
-    })
-    .then(response => response.json())
-    .then(data => {
-        alertBox.classList.remove('d-none');
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Confirm Manual Check-In';
+        fetch('/api/manual_attendance', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ student_id: studentId, password: password })
+        })
+        .then(response => response.json())
+        .then(data => {
+            alertBox.classList.remove('d-none');
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Confirm Manual Check-In';
 
-        if(data.success) {
-            alertBox.className = 'alert alert-success py-2 small';
-            alertBox.innerHTML = data.message;
-            passwordField.value = ''; 
-            setTimeout(() => { location.reload(); }, 1200);
-        } else {
+            if(data.success) {
+                alertBox.className = 'alert alert-success py-2 small';
+                alertBox.innerHTML = data.message;
+                passwordField.value = ''; 
+                setTimeout(() => { location.reload(); }, 1200);
+            } else {
+                alertBox.className = 'alert alert-danger py-2 small';
+                alertBox.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>${data.message}</span>
+                        <button type="button" class="btn btn-light btn-sm text-dark fw-bold px-3 flex-shrink-0 shadow-sm" onclick="dismissErrorAndClearInput()">Okay</button>
+                    </div>
+                `;
+            }
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            submitBtn.innerText = 'Confirm Manual Check-In';
+            alertBox.classList.remove('d-none');
             alertBox.className = 'alert alert-danger py-2 small';
             alertBox.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>${data.message}</span>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Network error occurred.</span>
                     <button type="button" class="btn btn-light btn-sm text-dark fw-bold px-3 flex-shrink-0 shadow-sm" onclick="dismissErrorAndClearInput()">Okay</button>
                 </div>
             `;
-        }
-    })
-    .catch(err => {
-        submitBtn.disabled = false;
-        submitBtn.innerText = 'Confirm Manual Check-In';
-        alertBox.classList.remove('d-none');
-        alertBox.className = 'alert alert-danger py-2 small';
-        alertBox.innerHTML = `
-            <div class="d-flex justify-content-between align-items-center">
-                <span class="me-2"><i class="bi bi-exclamation-triangle-fill me-1"></i>Network error occurred.</span>
-                <button type="button" class="btn btn-light btn-sm text-dark fw-bold px-3 flex-shrink-0 shadow-sm" onclick="dismissErrorAndClearInput()">Okay</button>
-            </div>
-        `;
+        });
     });
-});
 
-function dismissErrorAndClearInput() {
-    const alertBox = document.getElementById('manualResponseAlert');
-    const inputField = document.getElementById('manualStudentId');
-    const passwordField = document.getElementById('manualPassword');
-   
-    if (alertBox) {
-        alertBox.classList.add('d-none');
-        alertBox.innerHTML = '';
+    function dismissErrorAndClearInput() {
+        const alertBox = document.getElementById('manualResponseAlert');
+        const inputField = document.getElementById('manualStudentId');
+        const passwordField = document.getElementById('manualPassword');
+       
+        if (alertBox) {
+            alertBox.classList.add('d-none');
+            alertBox.innerHTML = '';
+        }
+        if (inputField) {
+            inputField.value = ''; 
+        }
+        if (passwordField) {
+            passwordField.value = ''; 
+        }
+        if (inputField) {
+            inputField.focus();    
+        }
     }
-    if (inputField) {
-        inputField.value = ''; 
-    }
-    if (passwordField) {
-        passwordField.value = ''; 
-    }
-    if (inputField) {
-        inputField.focus();    
-    }
-}
 </script>
 {% endblock %}

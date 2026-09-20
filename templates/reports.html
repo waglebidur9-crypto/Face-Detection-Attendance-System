@@ -3,168 +3,203 @@
 {% block title %}Attendance Reports{% endblock %}
 
 {% block content %}
+<!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
     <div>
         <h2 class="fw-bold mb-1" style="color: inherit !important;">Attendance Analytics & Reports</h2>
         <p class="text-muted small mb-0">Generate summary reports, view data ranges, export records, or print files.</p>
     </div>
-    <div class="d-flex gap-2">
-        <a href="/export_report?type={{ report_type }}&start_date={{ start_date }}&end_date={{ end_date }}&year={{ year }}&month={{ month }}" class="btn btn-outline-success fw-semibold px-3 shadow-sm">
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="{{ url_for('export_report', type=report_type, start_date=start_date, end_date=end_date, year=year, month=month) }}" class="btn btn-outline-success fw-semibold px-3 shadow-sm text-nowrap">
             <i class="bi bi-file-earmark-excel me-1"></i> Export to CSV
         </a>
-        <button onclick="window.print()" class="btn btn-outline-primary fw-semibold px-3 shadow-sm">
+        <button onclick="window.print()" class="btn btn-outline-primary fw-semibold px-3 shadow-sm text-nowrap">
             <i class="bi bi-printer me-1"></i> Print / Export PDF
         </button>
     </div>
 </div>
 
-<!-- Filter Control Bar -->
-<div class="card-custom mb-4">
-    <form method="GET" action="/reports" class="row g-3 align-items-end">
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Report Type</label>
-            <select name="type" class="form-select border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);" onchange="this.form.submit()">
-                <option value="daily" {% if report_type == 'daily' %}selected{% endif %}>Daily Summary</option>
-                <option value="range" {% if report_type == 'range' %}selected{% endif %}>Date Range Summary</option>
-                <option value="monthly" {% if report_type == 'monthly' %}selected{% endif %}>Monthly Attendance</option>
-            </select>
-        </div>
+<!-- Master-Detail Split Layout Matching Interface Style -->
+<div class="row g-4">
+    
+    <!-- Left Column: Report Categories & Parameters Sidebar Card -->
+    <div class="col-lg-4 col-12">
+        <div class="card shadow-sm border-0 bg-body h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0">
+                <h5 class="fw-bold mb-0" style="color: inherit !important;">Report Categories</h5>
+                <p class="text-muted small mt-1">Select a report format to generate.</p>
+            </div>
+            <div class="card-body px-3 py-3">
+                <div class="list-group list-group-flush gap-2">
+                    <a href="{{ url_for('reports', type='daily') }}" class="list-group-item list-group-item-action border rounded-3 d-flex justify-content-between align-items-center {% if report_type == 'daily' or not report_type %}active text-white bg-primary border-primary{% else %}bg-body text-body{% endif %}">
+                        <div>
+                            <i class="bi bi-calendar-day me-2"></i><strong>Daily Summary</strong>
+                        </div>
+                        <i class="bi bi-chevron-right small"></i>
+                    </a>
+                    <a href="{{ url_for('reports', type='range') }}" class="list-group-item list-group-item-action border rounded-3 d-flex justify-content-between align-items-center {% if report_type == 'range' %}active text-white bg-primary border-primary{% else %}bg-body text-body{% endif %}">
+                        <div>
+                            <i class="bi bi-calendar-range me-2"></i><strong>Date Range Summary</strong>
+                        </div>
+                        <i class="bi bi-chevron-right small"></i>
+                    </a>
+                    <a href="{{ url_for('reports', type='monthly') }}" class="list-group-item list-group-item-action border rounded-3 d-flex justify-content-between align-items-center {% if report_type == 'monthly' %}active text-white bg-primary border-primary{% else %}bg-body text-body{% endif %}">
+                        <div>
+                            <i class="bi bi-calendar-month me-2"></i><strong>Monthly Attendance</strong>
+                        </div>
+                        <i class="bi bi-chevron-right small"></i>
+                    </a>
+                </div>
 
-        {% if report_type == 'range' %}
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Start Date</label>
-            <input type="date" name="start_date" value="{{ start_date }}" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
+                <!-- Inline Form Parameter Inputs -->
+                <div class="mt-4 pt-3 border-top">
+                    <form method="GET" action="{{ url_for('reports') }}">
+                        <input type="hidden" name="type" value="{{ report_type|default('daily') }}">
+                        
+                        {% if report_type == 'range' %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Start Date</label>
+                            <input type="date" name="start_date" value="{{ start_date }}" class="form-control border shadow-sm bg-body text-body">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">End Date</label>
+                            <input type="date" name="end_date" value="{{ end_date }}" class="form-control border shadow-sm bg-body text-body">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm"><i class="bi bi-filter me-1"></i> Apply Range</button>
+                        
+                        {% elif report_type == 'monthly' %}
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Year</label>
+                            <input type="number" name="year" value="{{ year }}" class="form-control border shadow-sm bg-body text-body">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold text-muted">Month (1-12)</label>
+                            <input type="number" name="month" min="1" max="12" value="{{ month }}" class="form-control border shadow-sm bg-body text-body">
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm"><i class="bi bi-calendar-month me-1"></i> Apply Month</button>
+                        
+                        {% else %}
+                        <div class="text-muted small fst-italic py-2">
+                            <i class="bi bi-info-circle me-1"></i> Showing aggregate daily summary breakdown logs.
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
         </div>
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">End Date</label>
-            <input type="date" name="end_date" value="{{ end_date }}" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm"><i class="bi bi-filter me-1"></i> Generate Range</button>
-        </div>
-        {% elif report_type == 'monthly' %}
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Year</label>
-            <input type="number" name="year" value="{{ year }}" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small fw-bold text-muted">Month (1-12)</label>
-            <input type="number" name="month" min="1" max="12" value="{{ month }}" class="form-control border shadow-sm" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
-        </div>
-        <div class="col-md-3">
-            <button type="submit" class="btn btn-primary w-100 fw-semibold shadow-sm"><i class="bi bi-calendar-month me-1"></i> Generate Month</button>
-        </div>
-        {% else %}
-        <div class="col-md-9 text-end">
-            <span class="text-muted small fst-italic">Viewing general daily logs overview.</span>
-        </div>
-        {% endif %}
-    </form>
-</div>
-
-<!-- Presentation Table -->
-<div class="card-custom">
-    <div class="d-flex justify-content-between align-items-center mb-3">
-        <h5 class="m-0 fw-bold" style="color: inherit !important;">
-            {% if report_type == 'range' %}
-                Date Range Summary ({{ start_date }} to {{ end_date }})
-            {% elif report_type == 'monthly' %}
-                Monthly Summary for Year {{ year }}, Month {{ month }}
-            {% else %}
-                Daily Attendance Breakdown
-            {% endif %}
-        </h5>
     </div>
-   
-    <div class="table-responsive">
-        <table class="table align-middle mb-0">
-            <thead>
-                <tr>
+
+    <!-- Right Column: Main Data Table Card -->
+    <div class="col-lg-8 col-12">
+        <div class="card shadow-sm border-0 bg-body h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 pb-0 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="m-0 fw-bold" style="color: inherit !important;">
                     {% if report_type == 'range' %}
-                    <th>Student ID</th>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th class="text-center">Total Days Present</th>
-                    <th class="text-center">Actions</th>
+                        Date Range Summary ({{ start_date }} to {{ end_date }})
                     {% elif report_type == 'monthly' %}
-                    <th>Student ID</th>
-                    <th>Name</th>
-                    <th>Department</th>
-                    <th class="text-center">Total Days Present</th>
+                        Monthly Summary for Year {{ year }}, Month {{ month }}
                     {% else %}
-                    <th>Date</th>
-                    <th>Unique Students Present</th>
-                    <th>Total Scans</th>
-                    <th class="text-center">Actions</th>
+                        Daily Attendance Breakdown
                     {% endif %}
-                </tr>
-            </thead>
-            <tbody>
-                {% for row in data %}
-                <tr>
-                    {% if report_type == 'range' %}
-                    <td class="fw-bold text-primary">{{ row.student_id }}</td>
-                    <td class="fw-semibold" style="color: var(--bs-body-color) !important;">{{ row.name }}</td>
-                    <td>
-                        <span class="badge border px-2 py-1" style="background-color: rgba(108, 117, 125, 0.15); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.3) !important;">
-                            {{ row.department }}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 px-3 py-1">{{ row.total_present }} days</span>
-                    </td>
-                    <td class="text-center">
-                        <button class="btn btn-sm btn-outline-primary" onclick="viewStudentDetails('{{ row.student_id }}', '{{ row.name }}', '{{ start_date }}', '{{ end_date }}')">
-                            <i class="bi bi-eye me-1"></i> View Details
-                        </button>
-                    </td>
-                    
-                    {% elif report_type == 'monthly' %}
-                    <td class="fw-bold text-primary">{{ row.student_id }}</td>
-                    <td class="fw-semibold" style="color: var(--bs-body-color) !important;">{{ row.name }}</td>
-                    <td>
-                        <span class="badge border px-2 py-1" style="background-color: rgba(108, 117, 125, 0.15); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.3) !important;">
-                            {{ row.department }}
-                        </span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 px-3 py-1">{{ row.total_present }} days</span>
-                    </td>
-                    
-                    {% else %}
-                    <td class="fw-bold text-primary">
-                        <i class="bi bi-calendar-event me-2 text-secondary"></i>{{ row.attendance_date }}
-                    </td>
-                    <td>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle fs-6 px-3 py-1">{{ row.total_present }} Students</span>
-                    </td>
-                    <td>
-                        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle fs-6 px-3 py-1">{{ row.total_scans }} Scans</span>
-                    </td>
-                    <td class="text-center">
-                        <a href="/attendance?date={{ row.attendance_date }}" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye me-1"></i> View Detailed Logs
-                        </a>
-                    </td>
-                    {% endif %}
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-5">
-                        <i class="bi bi-folder2-open fs-2 d-block mb-2 text-secondary"></i>
-                        No records found for the selected timeframe.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                </h5>
+                <span class="badge bg-info-subtle text-info border border-info-subtle px-3 py-2 fw-semibold">
+                    {{ data|length }} Records Recorded
+                </span>
+            </div>
+           
+            <div class="card-body p-0 mt-3">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0 text-body">
+                        <thead>
+                            <tr>
+                                {% if report_type == 'range' %}
+                                <th class="ps-4 py-3 text-nowrap">Student ID</th>
+                                <th class="py-3 text-nowrap">Name</th>
+                                <th class="py-3 text-nowrap">Department</th>
+                                <th class="text-center py-3 text-nowrap">Total Days Present</th>
+                                <th class="text-end pe-4 py-3 text-nowrap" style="width: 150px;">Actions</th>
+                                {% elif report_type == 'monthly' %}
+                                <th class="ps-4 py-3 text-nowrap">Student ID</th>
+                                <th class="py-3 text-nowrap">Name</th>
+                                <th class="py-3 text-nowrap">Department</th>
+                                <th class="text-center pe-4 py-3 text-nowrap">Total Days Present</th>
+                                {% else %}
+                                <th class="ps-4 py-3 text-nowrap">Date</th>
+                                <th class="py-3 text-nowrap">Unique Students Present</th>
+                                <th class="py-3 text-nowrap">Total Scans</th>
+                                <th class="text-end pe-4 py-3 text-nowrap" style="width: 180px;">Actions</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in data %}
+                            <tr>
+                                {% if report_type == 'range' %}
+                                <td class="ps-4 fw-bold text-primary text-nowrap">{{ row.student_id }}</td>
+                                <td class="fw-semibold text-nowrap" style="color: var(--bs-body-color) !important;">{{ row.name }}</td>
+                                <td class="text-nowrap">
+                                    <span class="badge border px-2.5 py-1" style="background-color: rgba(108, 117, 125, 0.1); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.25) !important;">
+                                        {{ row.department }}
+                                    </span>
+                                </td>
+                                <td class="text-center text-nowrap">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5">{{ row.total_present }} days</span>
+                                </td>
+                                <td class="text-end pe-4 text-nowrap">
+                                    <button class="btn btn-sm btn-outline-primary text-nowrap px-3 shadow-sm" onclick="viewStudentDetails('{{ row.student_id }}', '{{ row.name }}', '{{ start_date }}', '{{ end_date }}')">
+                                        <i class="bi bi-eye me-1"></i> View Details
+                                    </button>
+                                </td>
+                                
+                                {% elif report_type == 'monthly' %}
+                                <td class="ps-4 fw-bold text-primary text-nowrap">{{ row.student_id }}</td>
+                                <td class="fw-semibold text-nowrap" style="color: var(--bs-body-color) !important;">{{ row.name }}</td>
+                                <td class="text-nowrap">
+                                    <span class="badge border px-2.5 py-1" style="background-color: rgba(108, 117, 125, 0.1); color: var(--bs-body-color) !important; border-color: rgba(108, 117, 125, 0.25) !important;">
+                                        {{ row.department }}
+                                    </span>
+                                </td>
+                                <td class="text-center pe-4 text-nowrap">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5">{{ row.total_present }} days</span>
+                                </td>
+                                
+                                {% else %}
+                                <td class="ps-4 fw-bold text-primary text-nowrap">
+                                    <i class="bi bi-calendar-event me-2 text-secondary"></i>{{ row.attendance_date }}
+                                </td>
+                                <td class="text-nowrap">
+                                    <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5">{{ row.total_present }} Students</span>
+                                </td>
+                                <td class="text-nowrap">
+                                    <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-3 py-1.5">{{ row.total_scans }} Scans</span>
+                                </td>
+                                <td class="text-end pe-4 text-nowrap">
+                                    <a href="/attendance?date={{ row.attendance_date }}" class="btn btn-sm btn-outline-primary text-nowrap px-3 shadow-sm">
+                                        <i class="bi bi-eye me-1"></i> View Logs
+                                    </a>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-5">
+                                    <i class="bi bi-folder2-open fs-2 d-block mb-2 text-secondary"></i>
+                                    No records found for the selected timeframe.
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 
 <!-- Modal for Student Range Details -->
 <div class="modal fade" id="studentDetailsModal" tabindex="-1" aria-labelledby="modalTitle" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border shadow" style="background-color: var(--bs-body-bg); color: var(--bs-body-color);">
+        <div class="modal-content border shadow bg-body text-body">
             <div class="modal-header border-bottom">
                 <h5 class="modal-title fw-bold" style="color: inherit !important;" id="modalTitle">Attendance Logs</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -172,11 +207,11 @@
             <div class="modal-body p-4">
                 <p class="text-muted small mb-3" id="modalSubtitle"></p>
                 <div class="table-responsive">
-                    <table class="table table-sm align-middle mb-0">
+                    <table class="table table-sm align-middle mb-0 text-body">
                         <thead>
                             <tr>
-                                <th>Timestamp</th>
-                                <th class="text-end">Confidence</th>
+                                <th class="ps-3 text-nowrap">Timestamp</th>
+                                <th class="text-end pe-3 text-nowrap">Confidence</th>
                             </tr>
                         </thead>
                         <tbody id="modalLogsBody">
@@ -186,7 +221,7 @@
                 </div>
             </div>
             <div class="modal-footer border-top">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-secondary btn-sm px-3" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -215,8 +250,8 @@ function viewStudentDetails(studentId, studentName, startDate, endDate) {
                     let confPercent = rawConf <= 1 ? (rawConf * 100).toFixed(1) : rawConf.toFixed(1);
 
                     html += `<tr>
-                        <td><i class="bi bi-clock me-1 text-warning"></i>${log.timestamp}</td>
-                        <td class="text-end"><span class="badge bg-success-subtle text-success border border-success-subtle">${confPercent}%</span></td>
+                        <td class="ps-3 text-nowrap"><i class="bi bi-clock me-1 text-warning"></i>${log.timestamp}</td>
+                        <td class="text-end pe-3 text-nowrap"><span class="badge bg-success-subtle text-success border border-success-subtle">${confPercent}%</span></td>
                     </tr>`;
                 });
                 tbody.innerHTML = html;

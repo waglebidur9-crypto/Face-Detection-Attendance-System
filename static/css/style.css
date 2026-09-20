@@ -8,7 +8,7 @@
     --card-bg: #ffffff;           /* Pure white for content cards */
     
     /* Typography Colors */
-    --text-main: #1e293b;         /* Dark slate for primary text */
+    --text-main: #1e293b;        /* Dark slate for primary text */
     --text-muted: #64748b;        /* Muted slate for secondary text */
     
     /* Brand & Accents */
@@ -45,6 +45,7 @@ body {
 .dashboard-wrapper {
     display: flex;
     min-height: 100vh;
+    overflow-x: hidden;
 }
 
 /* Sidebar */
@@ -60,6 +61,7 @@ body {
     left: 0;
     z-index: 100;
     box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease-in-out;
 }
 
 .sidebar-brand {
@@ -108,6 +110,16 @@ body {
     display: flex;
     flex-direction: column;
     min-width: 0; /* Prevents flexbox blowout on small screens */
+    transition: margin-left 0.3s ease-in-out;
+}
+
+/* Collapsed State (Triggered via JS Toggle) */
+.dashboard-wrapper.sidebar-collapsed .sidebar {
+    transform: translateX(-100%);
+}
+
+.dashboard-wrapper.sidebar-collapsed .main-content {
+    margin-left: 0;
 }
 
 /* Top Navbar */
@@ -117,12 +129,21 @@ body {
     border-bottom: 1px solid var(--border-color);
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: space-between;
     padding: 0 32px;
-    gap: 20px;
     position: sticky;
     top: 0;
     z-index: 99;
+}
+
+#sidebarToggleBtn {
+    background-color: transparent;
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+#sidebarToggleBtn:hover {
+    background-color: var(--neutral-bg);
 }
 
 .user-profile-badge {
@@ -177,10 +198,10 @@ body {
 }
 
 .table tbody tr:hover {
-    background-color: var(--main-bg); /* Subtle gray hover */
+    background-color: var(--main-bg);
 }
 
-/* List Groups (Used in Attendance Sidebar) */
+/* List Groups */
 .list-group-item {
     border: 1px solid transparent;
     margin-bottom: 4px;
@@ -219,8 +240,6 @@ body {
 /* =========================================
    4. CUSTOM BADGES & STATUS INDICATORS
    ========================================= */
-
-/* Department / Neutral Badge */
 .badge-dept, .badge-neutral {
     background-color: var(--neutral-bg);
     color: var(--neutral-text);
@@ -229,7 +248,6 @@ body {
     border-radius: 6px;
 }
 
-/* Success / Registered Badge */
 .badge-registered, .badge-success-custom {
     background-color: var(--success-bg);
     color: var(--success-text);
@@ -238,7 +256,6 @@ body {
     border-radius: 6px;
 }
 
-/* Warning / Missing Badge */
 .badge-missing, .badge-warning-custom {
     background-color: var(--warning-bg);
     color: var(--warning-text);
@@ -247,7 +264,6 @@ body {
     border-radius: 6px;
 }
 
-/* Info / Action Badge */
 .badge-info-custom {
     background-color: var(--info-bg);
     color: var(--info-text);
@@ -259,8 +275,6 @@ body {
 /* =========================================
    5. UTILITIES & OVERRIDES
    ========================================= */
-
-/* Make form controls match the clean aesthetic */
 .form-control, .form-select {
     border-color: var(--border-color);
     border-radius: 6px;
@@ -274,7 +288,6 @@ body {
     box-shadow: 0 0 0 0.25rem rgba(37, 99, 235, 0.25);
 }
 
-/* Buttons */
 .btn {
     border-radius: 6px;
     font-weight: 600;
@@ -286,6 +299,7 @@ body {
     padding: 6px 12px;
     font-size: 0.85rem;
 }
+
 /* =========================================
    6. DARK MODE THEME OVERRIDES
    ========================================= */
@@ -303,6 +317,15 @@ body {
 [data-bs-theme="dark"] .top-navbar {
     background-color: var(--card-bg) !important;
     border-bottom-color: var(--border-color) !important;
+}
+
+[data-bs-theme="dark"] #sidebarToggleBtn {
+    border-color: var(--border-color);
+    color: var(--text-main);
+}
+
+[data-bs-theme="dark"] #sidebarToggleBtn:hover {
+    background-color: #1e293b;
 }
 
 [data-bs-theme="dark"] .table thead th {
@@ -347,4 +370,18 @@ body {
 [data-bs-theme="dark"] .modal-footer {
     background-color: #0f172a;
     border-color: var(--border-color);
+}
+/* Card Hover & Active Floating Effect */
+.card-hover-effect {
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.card-hover-effect:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+.card-hover-effect:active {
+    transform: translateY(-2px);
+    box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1) !important;
 }

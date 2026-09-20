@@ -25,6 +25,7 @@
             --primary-accent: #2563eb;
             --navbar-bg: #ffffff;
             --navbar-border: #e2e8f0;
+            --neutral-bg: #e2e8f0;
         }
 
         [data-bs-theme="dark"] {
@@ -36,6 +37,7 @@
             --primary-accent: #3b82f6;
             --navbar-bg: #111827;
             --navbar-border: #1f2937;
+            --neutral-bg: #1e293b;
         }
 
         body {
@@ -44,12 +46,14 @@
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             overflow-x: hidden;
             transition: background-color 0.3s ease, color 0.3s ease;
+            margin: 0;
         }
 
         /* Dashboard Layout Wrapper */
         .dashboard-wrapper {
             display: flex;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         /* Sidebar Styling */
@@ -65,7 +69,7 @@
             left: 0;
             z-index: 100;
             box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-            transition: background-color 0.3s ease;
+            transition: transform 0.3s ease-in-out, background-color 0.3s ease;
         }
 
         .sidebar-brand {
@@ -112,6 +116,17 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            min-width: 0;
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        /* Collapsed State (Triggered via JS Toggle) */
+        .dashboard-wrapper.sidebar-collapsed .sidebar {
+            transform: translateX(-100%);
+        }
+
+        .dashboard-wrapper.sidebar-collapsed .main-content {
+            margin-left: 0;
         }
 
         /* Top Navbar */
@@ -127,6 +142,16 @@
             top: 0;
             z-index: 99;
             transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        #sidebarToggleBtn {
+            background-color: transparent;
+            border-color: var(--navbar-border);
+            color: var(--text-main);
+        }
+
+        #sidebarToggleBtn:hover {
+            background-color: var(--neutral-bg);
         }
 
         .user-profile-badge {
@@ -211,11 +236,6 @@
             color: #fca5a5 !important;
             border-color: #b91c1c !important;
         }
-
-        [data-bs-theme="dark"] .bg-primary-subtle {
-            background-color: rgba(59, 130, 246, 0.15) !important;
-            color: #93c5fd !important;
-        }
     </style>
 </head>
 <body>
@@ -262,23 +282,33 @@
             
             <!-- Top Navbar -->
             <header class="top-navbar">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="badge bg-primary-subtle border border-primary border-opacity-10 px-3 py-2 fw-semibold">
-                        <i class="bi bi-shield-lock-fill me-1"></i> Anti-Spoofing Active
-                    </span>
+                <!-- Left Group: Toggle Button & Brand Logo -->
+                <div class="d-flex align-items-center gap-3">
+                    <button id="sidebarToggleBtn" class="btn btn-outline-secondary btn-sm px-2 py-1 rounded" title="Toggle Sidebar" onclick="toggleSidebar()">
+                        <i class="bi bi-list fs-6"></i>
+                    </button>
+                    <div class="d-flex align-items-center gap-2">
+                        <i class="bi bi-mortarboard-fill text-primary fs-5"></i>
+                        <span class="fw-bold fs-6">Attendance System</span>
+                    </div>
                 </div>
+
+                <!-- Right Group: Theme Toggle, Profile & Back Action -->
                 <div class="d-flex align-items-center gap-3">
                     <!-- Dark Mode Toggle Button -->
                     <button id="theme-toggle" class="btn btn-outline-secondary btn-sm rounded-circle p-2 d-flex align-items-center justify-content-center" style="width: 38px; height: 38px;" title="Toggle Dark/Light Mode">
                         <i id="theme-icon" class="bi bi-moon-fill fs-6"></i>
                     </button>
+                    
                     <div class="user-profile-badge">
                         <i class="bi bi-person-circle fs-5 text-secondary"></i>
                         <span>Admin</span>
                     </div>
+
                     <div class="vr h-50 my-auto bg-secondary opacity-25"></div>
+
                     <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-sm px-3 fw-semibold">
-                        <i class="bi bi-arrow-left me-1"></i> Back to Dashboard
+                        <i class="bi bi-arrow-left me-1"></i> Dashboard
                     </a>
                 </div>
             </header>
@@ -318,6 +348,14 @@
 
     <!-- Script Logic -->
     <script>
+        // Sidebar Toggle Handler
+        function toggleSidebar() {
+            const wrapper = document.querySelector('.dashboard-wrapper');
+            if (wrapper) {
+                wrapper.classList.toggle('sidebar-collapsed');
+            }
+        }
+
         // Dark Mode Toggle Logic
         const themeToggleBtn = document.getElementById('theme-toggle');
         const themeIcon = document.getElementById('theme-icon');
