@@ -203,8 +203,6 @@
         const ctx = canvas.getContext('2d');
         const statusAlert = document.getElementById('status-alert');
 
-        let recognitionStreak = {};
-        const requiredStreak = 5; // Requires ~2 seconds of stable presence
         let isProcessing = false;
 
         async function startCamera() {
@@ -222,10 +220,11 @@
 
         function captureFrameAsBase64() {
             if (video.videoWidth === 0 || video.videoHeight === 0) return null;
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
+            // Downscale canvas resolution to 320x240 for rapid network payload transfer and instant processing
+            canvas.width = 320;
+            canvas.height = 240;
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            return canvas.toDataURL('image/jpeg', 0.85);
+            return canvas.toDataURL('image/jpeg', 0.70);
         }
 
         async function processVideoFrame() {
@@ -250,34 +249,25 @@
                    
                     if (face.student_id) {
                         let studentId = face.student_id;
-                        recognitionStreak[studentId] = (recognitionStreak[studentId] || 0) + 1;
+                        
+                        // Mark attendance instantly on first detection frame without streaks
+                        let markRes = await fetch('/api/mark_attendance', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                student_id: studentId,
+                                confidence: face.score
+                            })
+                        });
+                        let markData = await markRes.json();
 
-                        if (recognitionStreak[studentId] < requiredStreak) {
-                            statusAlert.className = "alert alert-warning py-2 px-3 fw-semibold mb-0 shadow-sm";
-                            statusAlert.innerHTML = `<i class="bi bi-hourglass-split me-1"></i> Verifying ${face.name}... Hold steady (${recognitionStreak[studentId]}/${requiredStreak})`;
-                        } else if (recognitionStreak[studentId] === requiredStreak) {
-                            let markRes = await fetch('/api/mark_attendance', {
-                                method: 'POST',
-                                headers: { 'Content-Type': 'application/json' },
-                                body: JSON.stringify({
-                                    student_id: studentId,
-                                    confidence: face.score
-                                })
-                            });
-                            let markData = await markRes.json();
-
-                            statusAlert.className = `alert ${markData.success ? 'alert-success' : 'alert-warning'} py-2 px-3 fw-semibold mb-0 shadow-sm`;
-                            statusAlert.innerHTML = `<i class="bi ${markData.success ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-1"></i> ${face.name} (ID: ${studentId}) - ${markData.message}`;
-                            
-                            setTimeout(() => { recognitionStreak[studentId] = 0; }, 5000);
-                        }
+                        statusAlert.className = `alert ${markData.success ? 'alert-success' : 'alert-warning'} py-2 px-3 fw-semibold mb-0 shadow-sm`;
+                        statusAlert.innerHTML = `<i class="bi ${markData.success ? 'bi-check-circle-fill' : 'bi-exclamation-circle-fill'} me-1"></i> ${face.name} (ID: ${studentId}) - ${markData.message}`;
                     } else {
-                        recognitionStreak = {};
                         statusAlert.className = "alert alert-secondary py-2 px-3 fw-semibold mb-0 shadow-sm";
                         statusAlert.innerHTML = '<i class="bi bi-person-slash me-1"></i> Unrecognized Face Detected';
                     }
                 } else {
-                    recognitionStreak = {};
                     statusAlert.className = "alert alert-info py-2 px-3 fw-semibold mb-0 shadow-sm";
                     statusAlert.innerHTML = '<i class="bi bi-search me-1"></i> Looking for faces...';
                 }
@@ -289,7 +279,7 @@
         }
 
         startCamera();
-        setInterval(processVideoFrame, 400);
+        setInterval(processVideoFrame, 150);
     </script>
 </body>
 </html>
