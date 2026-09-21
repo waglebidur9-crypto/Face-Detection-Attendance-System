@@ -263,7 +263,18 @@ def process_frame():
         if img is None:
             return jsonify({"status": "error", "message": "Invalid image data"}), 400
         
-        faces = engine.detect_and_align(img)
+        # FAST OPTIMIZATION: Resize frame down for rapid backend processing (e.g., width 320)
+        height, width = img.shape[:2]
+        scale_factor = 1.0
+        if width > 320:
+            scale_factor = 320.0 / width
+            new_width = 320
+            new_height = int(height * scale_factor)
+            img_small = cv2.resize(img, (new_width, new_height))
+        else:
+            img_small = img
+
+        faces = engine.detect_and_align(img_small)
         if faces is None or len(faces) == 0:
             return jsonify({"status": "no_face", "faces": []})
 
@@ -271,20 +282,27 @@ def process_frame():
         results = []
 
         for face in faces:
-            features = engine.extract_features(img, face)
+            # Extract features on the downscaled frame for instant matching
+            features = engine.extract_features(img_small, face)
             match, score = engine.match_face(features, known_faces)
             
-            box = face[:4].astype(int).tolist()
+            # Scale box coordinates back up to original resolution if needed
+            box_coords = face[:4]
+            if scale_factor != 1.0:
+                box_coords = [int(coord / scale_factor) for coord in box_coords]
+            else:
+                box_coords = box_coords.astype(int).tolist()
+
             if match:
                 results.append({
-                    "box": box,
+                    "box": box_coords,
                     "name": match["name"],
                     "student_id": match["student_id"],
                     "score": round(float(score) * 100, 1)
                 })
             else:
                 results.append({
-                    "box": box,
+                    "box": box_coords,
                     "name": "Unknown",
                     "student_id": None,
                     "score": 0.0
