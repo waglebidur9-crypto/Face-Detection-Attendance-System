@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Public Holidays - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h2 class="text-body mb-0"><i class="bi bi-calendar-event-fill me-2 text-primary"></i>Manage Public Holidays</h2>
+            <p class="text-muted small mt-1 mb-0">Automated SMS absence alerts will be automatically skipped on these dates.</p>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <a href="{{ url_for('students') }}" class="btn btn-outline-secondary shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Students
+            </a>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Add Holiday Form Column -->
+        <div class="col-md-4 mb-4">
+            <div class="card shadow-sm border-0 bg-body">
+                <div class="card-body">
+                    <h5 class="card-title text-body mb-3"><i class="bi bi-plus-circle me-1 text-success"></i> Add New Holiday</h5>
+                    <form action="{{ url_for('holidays') }}" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small text-uppercase fw-bold">Holiday Date</label>
+                            <input type="date" name="holiday_date" class="form-control form-control-dark" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-secondary small text-uppercase fw-bold">Description / Name</label>
+                            <input type="text" name="description" class="form-control form-control-dark" placeholder="e.g. Dashain Festival" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100 fw-bold">
+                            <i class="bi bi-check-circle me-1"></i> Save Holiday
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Holidays List Table Column -->
+        <div class="col-md-8">
+            <div class="card shadow-sm border-0 bg-body">
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 text-body">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th scope="col" class="ps-3 py-3" style="width: 70px;">S.No</th>
+                                    <th scope="col" class="py-3 text-nowrap">Date</th>
+                                    <th scope="col" class="py-3">Description</th>
+                                    <th scope="col" class="py-3 text-end pe-3" style="width: 100px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if holidays %}
+                                    {% for h in holidays %}
+                                    <tr>
+                                        <td class="ps-3 text-muted">{{ loop.index }}</td>
+                                        <td class="text-nowrap"><strong>{{ h.holiday_date }}</strong></td>
+                                        <td>{{ h.description }}</td>
+                                        <td class="text-end pe-3">
+                                            <form action="{{ url_for('delete_holiday', holiday_id=h.id) }}" method="POST" class="d-inline" onsubmit="return confirm('Are you sure you want to remove this holiday?');">
+                                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="4" class="text-center py-5 text-muted">
+                                            <i class="bi bi-calendar-x fs-2 d-block mb-2 text-secondary"></i>
+                                            <p class="mb-0">No public holidays registered yet.</p>
+                                        </td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Students - Attendance System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .custom-table-header {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+        color: #94a3b8 !important;
+        border-bottom: 2px solid #334151 !important;
+    }
+    .custom-table-header th {
+        color: #94a3b8 !important;
+        background: transparent !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header / Title & Add Button -->
+<div class="row mb-4 align-items-center">
+    <div class="col-md-6">
+        <h2 class="text-body mb-0"><i class="fas fa-users me-2 text-primary"></i>Students Directory</h2>
+    </div>
+    <div class="col-md-6 text-md-end mt-3 mt-md-0">
+        <a href="{{ url_for('sms_history') }}" class="btn btn-dark shadow-sm me-2"><i class="bi bi-chat-dots me-1"></i> SMS History</a>
+        <a href="{{ url_for('leaves_list') }}" class="btn btn-info shadow-sm me-2 text-white"><i class="bi bi-calendar-list me-1"></i> View Leaves</a>
+        <a href="{{ url_for('add_leave') }}" class="btn btn-warning shadow-sm me-2"><i class="bi bi-calendar-check me-1"></i> Log Leave</a>
+        <a href="{{ url_for('add_student') }}" class="btn btn-primary shadow-sm"><i class="bi bi-person-plus-fill me-1"></i> Add Student</a>
+    </div>
+</div>
+
+<!-- Search Bar Card -->
+<div class="card shadow-sm mb-4 border-0 bg-body">
+    <div class="card-body">
+        <form method="GET" action="{{ url_for('students') }}" class="row g-3">
+            <div class="col-12">
+                <div class="input-group">
+                    <span class="input-group-text bg-body-secondary text-body"><i class="bi bi-search"></i></span>
+                    <input type="text" name="q" class="form-control bg-body text-body" placeholder="Search by student name or ID..." value="{{ search_query if search_query else '' }}">
+                    <button class="btn btn-outline-primary" type="submit">Search</button>
+                    {% if search_query %}
+                        <a href="{{ url_for('students') }}" class="btn btn-outline-danger" title="Clear Search"><i class="bi bi-x-lg"></i></a>
+                    {% endif %}
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Students Table -->
+<div class="card shadow-sm border-0 bg-body">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 text-body">
+                <thead class="custom-table-header">
+                    <tr>
+                        <th scope="col" class="ps-3 py-3" style="width: 70px;">S.No</th>
+                        <th scope="col" class="py-3 text-nowrap">Student ID</th>
+                        <th scope="col" class="py-3 text-nowrap">Name</th>
+                        <th scope="col" class="py-3 text-nowrap">Department</th>
+                        <th scope="col" class="py-3 text-nowrap">Face Registered</th>
+                        <th scope="col" class="py-3 text-nowrap" style="width: 100px;">Details</th>
+                        <th scope="col" class="text-end pe-3 py-3 text-nowrap" style="width: 150px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if students %}
+                        {% for student in students %}
+                        <tr>
+                            <td class="ps-3 text-muted">{{ loop.index }}</td>
+                            <td class="text-nowrap"><strong>{{ student.student_id }}</strong></td>
+                            <td class="text-nowrap">{{ student.name }}</td>
+                            <td class="text-nowrap">{{ student.department if student.department else 'N/A' }}</td>
+                            <td class="text-nowrap">
+                                {% if student.face_encoding %}
+                                    <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Yes</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle-fill me-1"></i>No</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-nowrap">
+                                <button type="button" class="btn btn-sm btn-outline-info shadow-sm" data-bs-toggle="modal" data-bs-target="#studentModal{{ student.student_id }}">
+                                    <i class="bi bi-eye me-1"></i> View
+                                </button>
+                            </td>
+                            <td class="text-end pe-3 text-nowrap">
+                                <div class="d-inline-flex gap-1 justify-content-end text-nowrap">
+                                    <a href="{{ url_for('face_register', student_id=student.student_id) }}" class="btn btn-sm btn-outline-primary" title="Register Face">
+                                        <i class="bi bi-camera-fill"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_student', student_id=student.student_id) }}" class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="bi bi-pencil-fill"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ student.student_id }}')" title="Delete">
+                                        <i class="bi bi-trash-fill"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+
+                        <!-- Student Details Modal -->
+                        <div class="modal fade" id="studentModal{{ student.student_id }}" tabindex="-1" aria-labelledby="studentModalLabel{{ student.student_id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content shadow">
+                                    <div class="modal-header bg-dark text-white">
+                                        <h5 class="modal-title" id="studentModalLabel{{ student.student_id }}">
+                                            <i class="bi bi-person-badge me-2"></i> Student Details
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body text-start">
+                                        <div class="text-center mb-3">
+                                            <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center fw-bold fs-3" style="width: 60px; height: 60px;">
+                                                {{ student.name[:2].upper() }}
+                                            </div>
+                                            <h4 class="mt-2 mb-0">{{ student.name }}</h4>
+                                            <span class="badge bg-secondary mt-1">{{ student.department if student.department else 'N/A' }}</span>
+                                        </div>
+                                        <hr>
+                                        <div class="row g-2">
+                                            <div class="col-6"><strong>Student ID:</strong></div>
+                                            <div class="col-6 text-muted">{{ student.student_id }}</div>
+
+                                            <div class="col-6"><strong>Phone:</strong></div>
+                                            <div class="col-6 text-muted">{{ student.phone if student.phone else 'N/A' }}</div>
+
+                                            <div class="col-6"><strong>Address:</strong></div>
+                                            <div class="col-6 text-muted">{{ student.address if student.address else 'N/A' }}</div>
+
+                                            <div class="col-6"><strong>Parent's Name:</strong></div>
+                                            <div class="col-6 text-muted">{{ student.parent_name if student.parent_name else 'N/A' }}</div>
+
+                                            <div class="col-6"><strong>Parent's Phone:</strong></div>
+                                            <div class="col-6 text-muted">{{ student.parent_phone if student.parent_phone else 'N/A' }}</div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                        <a href="{{ url_for('edit_student', student_id=student.student_id) }}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-pencil-square me-1"></i> Edit Profile
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="7" class="text-center py-4 text-muted">
+                                <i class="bi bi-person-dash-fill fs-2 d-block mb-2"></i>
+                                <p class="mb-0">No students found matching your search criteria.</p>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<form id="deleteForm" method="POST" style="display: none;"></form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function confirmDelete(studentId) {
+        if (confirm("Are you sure you want to delete this student?")) {
+            const form = document.getElementById('deleteForm');
+            form.action = "/delete_student/" + studentId;
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

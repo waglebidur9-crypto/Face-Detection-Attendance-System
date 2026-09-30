@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block title %}Edit Student Details{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-7">
+        <div class="card-custom">
+            <h4 class="text-info mb-4 d-flex align-items-center gap-2">
+                <i class="bi bi-pencil-square"></i> Edit Student Information
+            </h4>
+
+            <form action="/edit_student/{{ student.student_id }}" method="POST" class="needs-validation" novalidate>
+                <!-- Student ID (Read-only to protect prefix structure) -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Student ID</label>
+                    <input type="text" name="student_id" class="form-control form-control-dark bg-secondary bg-opacity-10 text-muted" 
+                           value="{{ student.student_id }}" readonly title="Student ID cannot be changed manually">
+                    <div class="form-text text-muted small mt-1">Student ID is locked to maintain department code structure.</div>
+                </div>
+
+                <!-- Student Full Name -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Full Name</label>
+                    <input type="text" name="name" class="form-control form-control-dark" 
+                           value="{{ student.name }}" required>
+                </div>
+
+                <!-- Department (Dropdown selection) -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Department</label>
+                    <select name="department" class="form-select form-control-dark" required>
+                        <option value="" disabled>Select Department</option>
+                        <option value="BCA" {% if student.department == 'BCA' %}selected{% endif %}>BCA</option>
+                        <option value="B.Sc. CSIT" {% if student.department == 'BSc. CSIT' %}selected{% endif %}>BSc. CSIT</option>
+                        <option value="BIT" {% if student.department == 'BIM' %}selected{% endif %}>BIM</option>
+                        <option value="BIM" {% if student.department == 'BBIT' %}selected{% endif %}>BBIT</option>
+                    </select>
+                </div>
+
+                <!-- Phone Number (Enforced 10 Digits) -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Phone Number</label>
+                    <input type="text" name="phone" class="form-control form-control-dark" 
+                           value="{{ student.phone or '' }}" placeholder="e.g. 9812345678" pattern="[0-9]{10}" maxlength="10" title="Phone number must be exactly 10 digits">
+                </div>
+
+                <!-- Address -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Address</label>
+                    <textarea name="address" class="form-control form-control-dark" rows="2" placeholder="e.g. Kathmandu, Nepal">{{ student.address or '' }}</textarea>
+                </div>
+
+                <!-- Parent's Name -->
+                <div class="mb-3">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Parent's Name</label>
+                    <input type="text" name="parent_name" class="form-control form-control-dark" 
+                           value="{{ student.parent_name or '' }}" placeholder="e.g. John Doe Sr.">
+                </div>
+
+                <!-- Parent's Phone Number (Enforced 10 Digits) -->
+                <div class="mb-4">
+                    <label class="form-label text-secondary small text-uppercase fw-bold">Parent's Phone Number</label>
+                    <input type="text" name="parent_phone" class="form-control form-control-dark" 
+                           value="{{ student.parent_phone or '' }}" placeholder="e.g. 9898765432" pattern="[0-9]{10}" maxlength="10" title="Parent's phone number must be exactly 10 digits">
+                </div>
+
+                <!-- Form Controls -->
+                <div class="d-flex justify-content-between align-items-center">
+                    <a href="/students" class="btn btn-outline-secondary px-4">
+                        <i class="bi bi-arrow-left me-1"></i> Cancel
+                    </a>
+                    <button type="submit" class="btn btn-info-glow fw-bold px-4 py-2">
+                        <i class="bi bi-check-circle me-1"></i> Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

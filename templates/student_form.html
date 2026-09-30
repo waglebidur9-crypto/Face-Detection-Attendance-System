@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}{{ action }} Student{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card-custom">
+            <h4 class="text-info mb-4">{{ action }} Student Profile</h4>
+            
+            <form action="{% if action == 'Add' %}/add_student{% else %}/edit_student/{{ student.student_id }}{% endif %}" method="POST">
+                <div class="mb-3">
+                    <label class="form-label text-white">Student ID</label>
+                    <input type="text" name="student_id" class="form-control form-control-dark" 
+                           value="{{ student.student_id if student else '' }}" 
+                           {% if action == 'Update' %}readonly{% endif %} required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label text-white">Full Name</label>
+                    <input type="text" name="name" class="form-control form-control-dark" 
+                           value="{{ student.name if student else '' }}" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label text-white">Department</label>
+                    <input type="text" name="department" class="form-control form-control-dark" 
+                           value="{{ student.department if student else '' }}" required>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="/students" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-info fw-bold">{{ action }} Student</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

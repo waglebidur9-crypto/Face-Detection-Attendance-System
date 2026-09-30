@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>System Settings</h2>
+<div class="col-md-6 mt-3">
+    <div class="mb-3">
+        <label>Attendance Cooldown Window (Minutes)</label>
+        <input type="number" class="form-control" value="30" readonly>
+    </div>
+    <div class="mb-3">
+        <label>Recognition Confidence Threshold</label>
+        <input type="text" class="form-control" value="0.45" readonly>
+    </div>
+</div>
+{% endblock %}

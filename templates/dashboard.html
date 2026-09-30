@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Face Recognition Attendance System{% endblock %}
+
+{% block extra_css %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<!-- Page Header with Kiosk Button -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-3">
+    <div>
+        <h2 class="fw-bold text-body mb-1">Dashboard</h2>
+        <p class="text-muted small mb-0">Welcome back, Admin! Here's an overview of your attendance system.</p>
+    </div>
+    <div class="w-100 w-sm-auto">
+        <a href="{{ url_for('recognize') }}" class="btn btn-primary px-3 px-md-4 py-2 fw-semibold shadow-sm text-nowrap w-100">
+            <i class="bi bi-camera-video-fill me-2"></i> Launch Live kiosk
+        </a>
+    </div>
+</div>
+
+<!-- Metrics Overview Cards (Responsive grid for mobile/tablet/desktop) -->
+<div class="row g-3 mb-4">
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="metric-title text-muted fw-semibold small">Total Enrolled Students</span>
+                <div class="bg-primary-subtle text-primary p-2 rounded-2"><i class="bi bi-people fs-6"></i></div>
+            </div>
+            <h2 class="fw-bold text-body mb-1">{{ total_students }}</h2>
+            <span class="text-muted small">Active students in system</span>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="metric-title text-muted fw-semibold small">Today's Attendance</span>
+                <div class="bg-success-subtle text-success p-2 rounded-2"><i class="bi bi-calendar-day fs-6"></i></div>
+            </div>
+            <h2 class="fw-bold text-body mb-1">{{ today_attendance }}</h2>
+            <span class="text-muted small">Marked present today</span>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="metric-title text-muted fw-semibold small">System Accuracy</span>
+                <div class="bg-warning-subtle text-warning p-2 rounded-2"><i class="bi bi-shield-check fs-6"></i></div>
+            </div>
+            <h2 class="fw-bold text-body mb-1">{{ system_accuracy }}%</h2>
+            <div class="progress mt-2" style="height: 6px; background-color: var(--bs-border-color);">
+                <div class="progress-bar bg-warning" role="progressbar" style="width: {{ system_accuracy }}%;" aria-valuenow="{{ system_accuracy }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 p-3">
+            <div class="d-flex align-items-center justify-content-between mb-2">
+                <span class="metric-title text-muted fw-semibold small">Overall Rate</span>
+                <div class="bg-info-subtle text-info p-2 rounded-2"><i class="bi bi-graph-up-arrow fs-6"></i></div>
+            </div>
+            <h2 class="fw-bold text-body mb-1">{{ overall_rate }}%</h2>
+            <div class="progress mt-2" style="height: 6px; background-color: var(--bs-border-color);">
+                <div class="progress-bar bg-primary" role="progressbar" style="width: {{ overall_rate }}%;" aria-valuenow="{{ overall_rate }}" aria-valuemin="0" aria-valuemax="100"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Weekly Attendance Trend Chart Card -->
+<div class="card card-custom shadow-sm border-0 mb-4 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
+        <h5 class="fw-bold text-body m-0"><i class="bi bi-graph-up me-2 text-primary"></i>Weekly Attendance Trend</h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <button id="chartToggleBtn" class="btn btn-sm btn-outline-secondary fw-semibold px-3" onclick="toggleChartType()">
+                <i class="bi bi-bar-chart me-1"></i>Switch to Histogram
+            </button>
+            <select class="form-select form-select-sm text-body bg-body border border-secondary fw-semibold" style="width: auto;" aria-label="Filter chart timeframe">
+                <option class="bg-body text-body">Last 7 Active Days</option>
+            </select>
+        </div>
+    </div>
+    <div style="position: relative; height: 280px; width: 100%;">
+        <canvas id="attendanceTrendChart"></canvas>
+    </div>
+</div>
+
+<!-- Quick Navigation / Management Modules -->
+<div class="row g-3">
+    <div class="col-12 col-md-6 col-lg-3">
+        <a href="{{ url_for('students') }}" class="nav-card-link text-decoration-none">
+            <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-primary-subtle text-primary rounded-3 p-3 d-inline-flex">
+                            <i class="bi bi-people-fill fs-5"></i>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold text-body mb-1">Student Directory</h5>
+                    <p class="text-muted small mb-0">View and manage all enrolled students.</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <a href="{{ url_for('attendance') }}" class="nav-card-link text-decoration-none">
+            <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-success-subtle text-success rounded-3 p-3 d-inline-flex">
+                            <i class="bi bi-calendar-check-fill fs-5"></i>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold text-body mb-1">Attendance Logs</h5>
+                    <p class="text-muted small mb-0">Check daily attendance records.</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <div class="col-12 col-md-6 col-lg-3">
+        <a href="{{ url_for('reports') }}" class="nav-card-link text-decoration-none">
+            <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-info-subtle text-info rounded-3 p-3 d-inline-flex">
+                            <i class="bi bi-bar-chart-fill fs-5"></i>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold text-body mb-1">Reports & Analytics</h5>
+                    <p class="text-muted small mb-0">View detailed reports and insights.</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    <!-- Manage Holidays Card Added Here -->
+    <div class="col-12 col-md-6 col-lg-3">
+        <a href="{{ url_for('holidays') }}" class="nav-card-link text-decoration-none">
+            <div class="card card-custom card-hover-effect shadow-sm border-0 h-100 d-flex flex-column justify-content-between p-3">
+                <div>
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div class="bg-warning-subtle text-warning rounded-3 p-3 d-inline-flex">
+                            <i class="bi bi-calendar-event-fill fs-5"></i>
+                        </div>
+                        <i class="bi bi-arrow-right text-muted fs-5"></i>
+                    </div>
+                    <h5 class="fw-bold text-body mb-1">Public Holidays</h5>
+                    <p class="text-muted small mb-0">Manage holiday SMS absence exemptions.</p>
+                </div>
+            </div>
+        </a>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- Chart.js Script Initialization with Real-time Theme Adaptation -->
+<script>
+let departmentTrendChart = null;   
+let currentChartType = 'line';   
+let cachedChartLabels = [];
+let cachedChartDatasets = [];
+
+document.addEventListener("DOMContentLoaded", function() {
+    const canvasElement = document.getElementById('attendanceTrendChart');
+    if (!canvasElement) return;
+    const ctx = canvasElement.getContext('2d');
+
+    window.renderDepartmentChart = function(labels, datasetsArray) {
+        cachedChartLabels = labels;
+        cachedChartDatasets = datasetsArray;
+
+        if (departmentTrendChart) {
+            departmentTrendChart.destroy();
+        }
+
+        const isDark = document.documentElement.getAttribute('data-bs-theme') === 'dark';
+
+        departmentTrendChart = new Chart(ctx, {
+            type: currentChartType,
+            data: {
+                labels: labels,
+                datasets: datasetsArray
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { 
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: isDark ? '#cbd5e1' : '#334155',
+                            boxWidth: 14,
+                            font: { family: 'Inter', size: 12, weight: '600' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                        titleColor: isDark ? '#f1f5f9' : '#1e293b',
+                        bodyColor: isDark ? '#cbd5e1' : '#475569',
+                        borderColor: isDark ? '#334155' : '#e2e8f0',
+                        borderWidth: 1
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)' },
+                        ticks: { color: isDark ? '#94a3b8' : '#475569', font: { weight: '500' } }
+                    },
+                    y: {
+                        grid: { color: isDark ? 'rgba(255, 255, 255, 0.07)' : 'rgba(0, 0, 0, 0.07)' },
+                        ticks: { color: isDark ? '#94a3b8' : '#475569', precision: 0, font: { weight: '500' } },
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        window.departmentTrendChart = departmentTrendChart;
+    }
+
+    window.toggleChartType = function() {
+        const btn = document.getElementById('chartToggleBtn');
+        if (currentChartType === 'line') {
+            currentChartType = 'bar';
+            btn.innerHTML = '<i class="bi bi-graph-up me-1"></i>Switch to Line Chart';
+        } else {
+            currentChartType = 'line';
+            btn.innerHTML = '<i class="bi bi-bar-chart me-1"></i>Switch to Histogram';
+        }
+
+        if (cachedChartLabels.length > 0) {
+            renderDepartmentChart(cachedChartLabels, cachedChartDatasets);
+        }
+    }
+
+    // Auto-re-render chart instantly if user toggles theme mode
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-bs-theme' && cachedChartLabels.length > 0) {
+                renderDepartmentChart(cachedChartLabels, cachedChartDatasets);
+            }
+        });
+    });
+    observer.observe(document.documentElement, { attributes: true });
+
+    // Fetch live trend dataset from backend
+    fetch('/api/attendance_trend')
+        .then(response => response.json())
+        .then(res => {
+            if (res && res.success && res.datasets && res.datasets.length > 0) {
+                renderDepartmentChart(res.labels, res.datasets);
+            } else {
+                renderDepartmentChart(['Today'], [{
+                    label: 'General',
+                    data: [0],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: false
+                }]);
+            }
+        })
+        .catch(err => {
+            console.warn("API fetch error, loading fallback chart view:", err);
+            renderDepartmentChart(['Today'], [{
+                label: 'General',
+                data: [0],
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                borderWidth: 2,
+                fill: false
+            }]);
+        });
+});
+</script>
+{% endblock %}

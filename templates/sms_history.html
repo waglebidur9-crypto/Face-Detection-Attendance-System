@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block title %}SMS Alert History - Attendance System{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <!-- Page Header -->
+    <div class="row mb-4 align-items-center">
+        <div class="col-md-6">
+            <h2 class="text-body mb-0"><i class="bi bi-chat-left-text-fill me-2 text-primary"></i>SMS Alert History</h2>
+        </div>
+        <div class="col-md-6 text-md-end mt-3 mt-md-0">
+            <a href="{{ url_for('students') }}" class="btn btn-outline-secondary shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Back to Students
+            </a>
+        </div>
+    </div>
+
+    <!-- SMS Logs Table Card -->
+    <div class="card shadow-sm border-0 bg-body">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0 text-body">
+                    <thead class="table-dark">
+                        <tr>
+                            <th scope="col" class="ps-3 py-3" style="width: 70px;">S.No</th>
+                            <th scope="col" class="py-3 text-nowrap">Date</th>
+                            <th scope="col" class="py-3 text-nowrap">Timestamp</th>
+                            <th scope="col" class="py-3 text-nowrap">Student ID</th>
+                            <th scope="col" class="py-3 text-nowrap">Student Name</th>
+                            <th scope="col" class="py-3 text-nowrap">Phone Number</th>
+                            <th scope="col" class="py-3">Message Content</th>
+                            <th scope="col" class="py-3 text-nowrap">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if logs %}
+                            {% for log in logs %}
+                            <tr>
+                                <td class="ps-3 text-muted">{{ loop.index }}</td>
+                                <td class="text-nowrap text-muted">{{ log.timestamp.strftime('%Y-%m-%d') if log.timestamp.strftime is defined else log.timestamp[:10] }}</td>
+                                <td class="text-nowrap">{{ log.timestamp }}</td>
+                                <td class="text-nowrap"><strong>{{ log.student_id }}</strong></td>
+                                <td class="text-nowrap">{{ log.name if log.name else 'Unknown' }}</td>
+                                <td class="text-nowrap"><span class="badge bg-secondary">{{ log.phone_number }}</span></td>
+                                <td>{{ log.message }}</td>
+                                <td class="text-nowrap">
+                                    {% if log.status == 'Success' %}
+                                        <span class="badge bg-success">Sent</span>
+                                    {% else %}
+                                        <span class="badge bg-danger">Failed</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
+                                    <p class="mb-0">No SMS alert history found.</p>
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
