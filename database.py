@@ -1,5 +1,5 @@
 import os
-import pymysql
+import mysql.connector
 import json
 from werkzeug.security import generate_password_hash
 import numpy as np
@@ -9,22 +9,15 @@ from dotenv import load_dotenv
 # Force reload the .env file so it ignores any old cached terminal variables
 load_dotenv(override=True)
 
-
 def get_db():
-    """Connect to TiDB Cloud."""
-
-    conn_params = {
-        "host": os.environ.get("DB_HOST"),
-        "user": os.environ.get("DB_USER"),
-        "password": os.environ.get("DB_PASSWORD"),
-        "database": os.environ.get("DB_NAME", "attendance_db"),
-        "port": int(os.environ.get("DB_PORT", "4000")),
-        "ssl": {
-            "ca": os.path.join(os.path.dirname(__file__), "ca.pem")
-        }
-    }
-
-    return pymysql.connect(**conn_params)
+    """Connect to local MySQL database using mysql-connector-python."""
+    return mysql.connector.connect(
+        host=os.environ.get("DB_HOST", "localhost"),
+        user=os.environ.get("DB_USER", "root"),
+        password=os.environ.get("DB_PASSWORD", ""),
+        database=os.environ.get("DB_NAME", "face_attendance_new_db"),
+        port=int(os.environ.get("DB_PORT", 3306))
+    )
 
 def init_db():
     conn = get_db()
