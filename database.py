@@ -10,14 +10,27 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 def get_db():
-    """Lazy-load local database connection."""
-    return mysql.connector.connect(
-        host=os.environ.get('DB_HOST', 'localhost'),
-        user=os.environ.get('DB_USER', 'root'),
-        password=os.environ.get('DB_PASSWORD', ''),
-        database=os.environ.get('DB_NAME', 'face_attendance_new_db'),
-        port=int(os.environ.get('DB_PORT', 3306))
-    )
+    """Lazy-load database connection (supports both local MySQL and TiDB Cloud)."""
+    host = os.environ.get('DB_HOST', 'localhost')
+    
+    # Default to 4000 for TiDB Cloud, otherwise default to 3306 for local MySQL
+    default_port = 4000 if 'tidbcloud' in host else 3306
+    port = int(os.environ.get('DB_PORT', default_port))
+    
+    conn_params = {
+        'host': host,
+        'user': os.environ.get('DB_USER', 'root'),
+        'password': os.environ.get('DB_PASSWORD', ''),
+        'database': os.environ.get('DB_NAME', 'face_attendance_new_db'),
+        'port': port
+    }
+
+    # TiDB Cloud requires SSL connections
+    if 'tidbcloud' in host or os.environ.get('DB_SSL', '').lower() in ['true', '1']:
+        conn_params['ssl_disabled'] = False
+
+    return mysql.connector.connect(**conn_params)
+
 def init_db():
     conn = get_db()
     cursor = conn.cursor()
