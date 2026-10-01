@@ -28,8 +28,12 @@ def seed_database():
     print("Safely clearing existing attendance and student data...")
     try:
         cursor.execute("SET FOREIGN_KEY_CHECKS = 0;")
-        cursor.execute("DELETE FROM attendance;")
-        cursor.execute("DELETE FROM students;")
+        # Safely delete from core tables if they exist
+        for table in ["attendance", "leaves", "sms_logs", "students"]:
+            try:
+                cursor.execute(f"DELETE FROM {table};")
+            except Exception:
+                pass # Ignore if table doesn't exist yet
         cursor.execute("SET FOREIGN_KEY_CHECKS = 1;")
         conn.commit()
         print("Previous data cleared successfully.")
@@ -42,34 +46,22 @@ def seed_database():
 
     departments = ["BCA", "BSc.CSIT", "BIM", "BBIT"]
     
-    first_names = [
-        "Aarav", "Aayush", "Bikash", "Deepak", "Diya", "Ganesh", "Kiran", "Manish", "Nisha", "Puja", 
-        "Prabin", "Priya", "Rabin", "Rajesh", "Ritu", "Rohit", "Sajan", "Sandesh", "Sanjay",
-        "Saroj", "Sita", "Suman", "Sunil", "Suraj", "Sushant", "Swastika", "Ujjwal", "Bibek", "Pooja"
-    ]
-    last_names = [
-        "Adhikari", "Aryal", "Bhandari", "Bhattarai", "Dahal", "Gautam", "Karki", "Khadka", "Maharjan", "Shrestha",
-        "Tamang", "Thapa", "Timilsina", "Koirala", "Joshi", "Poudel", "Silwal", "Rai", "Limbu", "Gurung"
+    student_names = [
+        "Aarav Adhikari", "Aayush Aryal", "Bikash Bhandari", "Deepak Bhattarai", 
+        "Diya Dahal", "Ganesh Gautam", "Kiran Karki", "Manish Khadka", 
+        "Nisha Maharjan", "Puja Shrestha"
     ]
 
-    # Track sequence counters for each department independently
-    dept_counters = {dept: 1000 for dept in departments}
-
-    print("Generating 30 new students with department-specific IDs (e.g., BCA-1001)...")
+    print("Generating 10 test students with phone number 9845814467...")
     students = []
-    for _ in range(30):
-        department = random.choice(departments)
-        dept_counters[department] += 1
-        seq_num = dept_counters[department]
+    for i, name in enumerate(student_names):
+        department = departments[i % len(departments)]
+        student_id = f"{department}-{1001 + i}"
         
-        # Format ID like BCA-1001, BBIT-1001, etc.
-        student_id = f"{department}-{seq_num}"
-        
-        name = f"{random.choice(first_names)} {random.choice(last_names)}"
-        phone = f"98{random.randint(10000000, 99999999)}"
-        parent_phone = f"97{random.randint(10000000, 99999999)}"
+        phone = "9845814467"
+        parent_phone = "9845814467"
         parent_name = f"Parent of {name.split()[0]}"
-        address = "Kathmandu, Nepal"
+        address = "Gaindakot, Nepal"
         
         students.append((student_id, name, department))
         
@@ -80,15 +72,12 @@ def seed_database():
         )
     conn.commit()
 
-    print("Generating fluctuating 7-day attendance trend data...")
+    print("Generating 7-day test attendance trend data...")
     today = datetime.now().date()
     
     for day_offset in range(6, -1, -1):
         target_date = today - timedelta(days=day_offset)
-        
-        wave_factor = math.sin(day_offset * 1.2) * 6
-        target_count = int(21 + wave_factor + random.randint(-2, 2))
-        target_count = max(12, min(30, target_count))
+        target_count = random.randint(6, 10)
         
         present_students = random.sample(students, k=target_count)
         
@@ -109,7 +98,7 @@ def seed_database():
     conn.commit()
     cursor.close()
     conn.close()
-    print("Successfully seeded students with department-based IDs and attendance trends!")
+    print("Successfully seeded 10 test students and attendance records!")
 
 if __name__ == "__main__":
     seed_database()

@@ -10,18 +10,13 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 def get_db():
-    """Lazy-load database connection securely from environment variables."""
-    raw_host = os.environ.get('DB_HOST', 'localhost')
-    db_host = raw_host.split(':', 1)[0].strip()
-
+    """Lazy-load local database connection."""
     return mysql.connector.connect(
-        host=db_host,
+        host=os.environ.get('DB_HOST', 'localhost'),
         user=os.environ.get('DB_USER', 'root'),
-        password=os.environ.get('DB_PASSWORD', ''),  # Safe placeholder, reads from your local .env
-        database=os.environ.get('DB_NAME', 'defaultdb'),
-        port=27165,
-        ssl_disabled=False,
-        ssl_verify_cert=False
+        password=os.environ.get('DB_PASSWORD', ''),
+        database=os.environ.get('DB_NAME', 'face_attendance_new_db'),
+        port=int(os.environ.get('DB_PORT', 3306))
     )
 def init_db():
     conn = get_db()

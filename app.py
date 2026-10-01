@@ -1,8 +1,11 @@
 import base64
 import csv
 import io
+import time
 import cv2
 import numpy as np
+from datetime import date
+from kusha_helper import send_kusha_sms
 from datetime import datetime, timedelta
 from flask import Flask, flash, render_template, request, jsonify, redirect, url_for, session, make_response
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,10 +36,49 @@ def refresh_face_cache():
         print(f"[WARNING] Failed to refresh face cache: {e}")
         CACHED_KNOWN_FACES = []
 
-# --- SAFE LAUNCH INITIALIZATION ---
+# --- SAFE LAUNCH INITIALIZATION & CENTRAL TABLE CREATION ---
 try:
     init_db()
-    print("Database tables initialized successfully!")
+    
+    # Ensure all auxiliary tables exist immediately on startup to prevent error 1146
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS holidays (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            holiday_date DATE UNIQUE,
+            description VARCHAR(255)
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS leaves (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id VARCHAR(50),
+            leave_date DATE,
+            reason VARCHAR(255),
+            FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+        )
+    """)
+    
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS sms_logs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            student_id VARCHAR(50),
+            phone_number VARCHAR(20),
+            message TEXT,
+            status VARCHAR(50),
+            timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
+        )
+    """)
+    
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    print("Database tables and auxiliary logs initialized successfully!")
     refresh_face_cache()  # Populate cache on boot
 except Exception as e:
     print(f"WARNING: Initial database migration deferred: {e}")
@@ -113,17 +155,6 @@ def log_sms(student_id, phone_number, message, status):
         conn = get_db()
         cursor = conn.cursor()
         cursor.execute("""
-            CREATE TABLE IF NOT EXISTS sms_logs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                student_id VARCHAR(50),
-                phone_number VARCHAR(20),
-                message TEXT,
-                status VARCHAR(50),
-                timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
-            )
-        """)
-        cursor.execute("""
             INSERT INTO sms_logs (student_id, phone_number, message, status) 
             VALUES (%s, %s, %s, %s)
         """, (student_id, phone_number, message, status))
@@ -136,14 +167,7 @@ def send_sms(phone_number, message, student_id=None):
     if not phone_number:
         return False
     try:
-        api_url = "https://api.sms-provider.com/v1/send"
-        payload = {
-            'token': 'YOUR_API_KEY',
-            'to': phone_number,
-            'message': message
-        }
-        response = requests.post(api_url, data=payload, timeout=5)
-        success = (response.status_code == 200)
+        success = send_kusha_sms(phone_number, message)
         
         status_str = "Success" if success else "Failed"
         log_sms(student_id, phone_number, message, status_str)
@@ -160,7 +184,6 @@ def check_absent_students_at_10am():
         today_str = today_dt.strftime('%Y-%m-%d')
         
         # 1. Skip if today is Saturday (Nepal's official weekend)
-        # In Python's weekday(): Monday is 0, Saturday is 5, Sunday is 6.
         if today_dt.weekday() == 5:
             print("[INFO] Today is Saturday (Weekend). Skipping absent SMS check.")
             return
@@ -168,15 +191,6 @@ def check_absent_students_at_10am():
         try:
             conn = get_db()
             cursor = conn.cursor(dictionary=True)
-            
-            # Ensure holidays table exists
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS holidays (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    holiday_date DATE UNIQUE,
-                    description VARCHAR(255)
-                )
-            """)
             
             # 2. Skip if today is registered as a public holiday
             cursor.execute("SELECT * FROM holidays WHERE holiday_date = %s", (today_str,))
@@ -186,16 +200,6 @@ def check_absent_students_at_10am():
                 conn.close()
                 return
 
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS leaves (
-                    id INT AUTO_INCREMENT PRIMARY KEY,
-                    student_id VARCHAR(50),
-                    leave_date DATE,
-                    reason VARCHAR(255),
-                    FOREIGN KEY (student_id) REFERENCES students(student_id) ON DELETE CASCADE
-                )
-            """)
-            
             cursor.execute("SELECT * FROM students")
             students = cursor.fetchall()
             
@@ -211,16 +215,94 @@ def check_absent_students_at_10am():
                 if not attendance and not leave:
                     msg = f"Alert: Dear Parent, your child {student['name']} is absent from college today without prior notice."
                     
-                    if student.get("phone"):
-                        send_sms(student["phone"], msg, student_id=s_id)
+                    # Send strictly to parent phone if available
                     if student.get("parent_phone"):
                         send_sms(student["parent_phone"], msg, student_id=s_id)
+                        time.sleep(1)  # Brief pause to prevent gateway rate-limiting
             
             conn.close()
             print("[INFO] 10:00 AM absent SMS check executed successfully.")
         except Exception as e:
             print(f"[ERROR] Failed during 10:00 AM absent check: {e}")
 
+# --- SETUP BACKGROUND SCHEDULER FOR 10:00 AM AUTOMATION ---
+scheduler = BackgroundScheduler()
+scheduler.add_job(
+    id='daily_absent_sms_job',
+    func=check_absent_students_at_10am,
+    trigger='cron',
+    hour=10,
+    minute=0
+)
+scheduler.start()
+
+@app.route('/')
+def home():
+    return render_template('index.html')
+
+@app.route('/send-absent-alerts', methods=['POST'])
+def send_absent_alerts():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    
+    try:
+        today = date.today()
+        today_str = today.strftime('%Y-%m-%d')
+        
+        # 1. Skip if today is Saturday or a public holiday
+        if datetime.now().weekday() == 5:
+            return {"status": "success", "message": "Today is Saturday (Weekend). No alerts sent."}, 200
+
+        cursor.execute("SELECT * FROM holidays WHERE holiday_date = %s", (today_str,))
+        if cursor.fetchone():
+            return {"status": "success", "message": "Today is a public holiday. No alerts sent."}, 200
+
+        # 2. Query to find students who do not have an attendance entry for today
+        query = """
+            SELECT * FROM students 
+            WHERE student_id NOT IN (
+                SELECT student_id 
+                FROM attendance 
+                WHERE DATE(timestamp) = %s
+            )
+        """
+        cursor.execute(query, (today_str,))
+        absent_students = cursor.fetchall()
+        
+        if not absent_students:
+            return {"status": "success", "message": "No absent students found for today!"}, 200
+
+        sent_count = 0
+        for student in absent_students:
+            s_id = student['student_id']
+            student_name = student['name']
+            
+            # Check if student has an approved leave for today
+            cursor.execute("SELECT * FROM leaves WHERE student_id = %s AND leave_date = %s", (s_id, today_str))
+            if cursor.fetchone():
+                continue # Skip students on leave
+
+            message_text = f"Alert: Dear Parent, your child {student_name} is absent from college today without prior notice."
+            
+            # Send strictly to parent phone if available
+            if student.get("parent_phone"):
+                if send_sms(student["parent_phone"], message_text, student_id=s_id):
+                    sent_count += 1
+                time.sleep(1)  # Pause 1 second to prevent gateway rate-limiting
+
+        return {
+            "status": "success", 
+            "message": f"Absent alerts processed successfully. Sent {sent_count} notification(s)."
+        }, 200
+
+    except Exception as e:
+        print(f"Error in absent alerts route: {e}")
+        return {"status": "error", "message": str(e)}, 500
+        
+    finally:
+        cursor.close()
+        db.close()
+        
 @app.route("/holidays", methods=["GET", "POST"])
 def holidays():
     if "user" not in session:
@@ -228,15 +310,6 @@ def holidays():
     
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
-    
-    # Ensure table exists
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS holidays (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            holiday_date DATE UNIQUE,
-            description VARCHAR(255)
-        )
-    """)
     
     if request.method == "POST":
         holiday_date = request.form.get("holiday_date")
@@ -275,12 +348,6 @@ def delete_holiday(holiday_id):
     except Exception as e:
         flash(f"Error removing holiday: {e}", "danger")
     return redirect(url_for("holidays"))
-
-@app.route("/")
-def index():
-    if "user" in session:
-        return redirect(url_for("dashboard"))
-    return redirect(url_for("login"))
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
@@ -373,7 +440,6 @@ def add_student():
         parent_name = request.form.get("parent_name", "").strip()
         parent_phone = request.form.get("parent_phone", "").strip()
 
-        # --- 10-DIGIT VALIDATION CHECK ---
         if phone and (not phone.isdigit() or len(phone) != 10):
             flash("Phone number must be exactly 10 digits.", "danger")
             return render_template("add_student.html", name=name, department=department,
@@ -383,11 +449,8 @@ def add_student():
             flash("Parent's phone number must be exactly 10 digits.", "danger")
             return render_template("add_student.html", name=name, department=department,
                                  phone=phone, address=address, parent_name=parent_name, parent_phone=parent_phone)
-        # ---------------------------------
 
-        # Generate Student ID automatically based on department
         student_id = generate_student_id(department)
-
         success, message = save_student(student_id, name, department, phone, address, parent_name, parent_phone)
 
         if not success:
@@ -942,7 +1005,7 @@ def internal_error(error):
     print(f"Server 500 Error: {error}")
     if request.path.startswith('/api/'):
         return jsonify({"success": False, "message": "A server error occurred while processing your request. Please try again."}), 500
-    return render_template("login.html", error="An internal server error occurred. Please try again later."), 500
+    return render_template("login.html", error="An internal server error occurred. Please try again later."), 400
 
 @app.errorhandler(Exception)
 def handle_unexpected_exception(error):

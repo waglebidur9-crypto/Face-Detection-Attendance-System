@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Face Recognition Attendance System</title>
+    <!-- Bootstrap CSS for responsive modern layout -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            background-color: #0d1117 !important;
+            color: #ffffff !important;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow-x: hidden;
+        }
+        .hero-section {
+            padding: 100px 0 60px 0;
+            background: linear-gradient(180deg, rgba(35, 134, 54, 0.2) 0%, rgba(13, 17, 23, 1) 100%);
+            text-align: center;
+        }
+        .feature-card {
+            background-color: #161b22 !important;
+            border: 1px solid #30363d !important;
+            border-radius: 12px;
+            padding: 30px;
+            height: 100%;
+            transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: #238636 !important;
+            box-shadow: 0 8px 24px rgba(35, 134, 54, 0.25);
+        }
+        .btn-explore {
+            background-color: #238636 !important;
+            color: #ffffff !important;
+            font-weight: 600;
+            padding: 12px 35px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            border: none;
+            box-shadow: 0 4px 15px rgba(35, 134, 54, 0.4);
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-explore:hover {
+            background-color: #2ea043 !important;
+            transform: translateY(-2px);
+            color: #fff !important;
+            box-shadow: 0 6px 20px rgba(46, 160, 67, 0.6);
+        }
+    </style>
+</head>
+<body style="background-color: #0d1117; color: #ffffff;">
+
+    <!-- Hero Section -->
+    <div class="hero-section container">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <span class="badge mb-3 px-3 py-2 rounded-pill fw-semibold" style="background-color: rgba(35, 134, 54, 0.3); color: #43e97b; font-size: 0.9rem;">Next-Gen Automation</span>
+                <h1 style="font-size: 3rem; font-weight: 800; color: #ffffff; margin-bottom: 20px;">Smart Face Recognition Attendance & Management System</h1>
+                <p style="font-size: 1.2rem; color: #e1e4e8; max-width: 700px; margin: 0 auto 30px auto; line-height: 1.6;">An intelligent, lightning-fast platform designed to automate classroom tracking, eliminate proxy attendance, and streamline parent-student communication effortlessly.</p>
+                <a href="{{ url_for('login') }}" class="btn-explore">
+                    Explore Application <i class="fas fa-arrow-right ms-2"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Features Section -->
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 style="font-weight: 800; color: #ffffff; font-size: 2.2rem;">Core System Functionalities</h2>
+            <p style="color: #c9d1d9; font-size: 1.05rem;">Built with robust technologies to handle administrative workflows securely and efficiently.</p>
+        </div>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-camera-rotate"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Real-Time Facial Recognition</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Powered by advanced computer vision frameworks (OpenCV, YuNet, and SFace ONNX models) with optimized RAM-caching for instant face detection and matching.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-bell"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Automated 10:00 AM SMS Alerts</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Integrated background scheduling checks for student presence daily. Automatically dispatches instant SMS alerts via Sparrow SMS to parents if a student is absent.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-calendar-check"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Leave & Holiday Management</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Smart exception handling skips absent alerts during local weekends (Saturdays), public holidays, and pre-approved student leaves.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-database"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">MySQL Database & Student ID Gen</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Automated student ID generation mapped by department, complete with bulk CSV student importing tools and data security.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-chart-line"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Analytics & Reports</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Generate daily summary logs, monthly attendance metrics, custom date-range trends, and export complete reports seamlessly into CSV format.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="font-size: 2.5rem; color: #58a6ff; margin-bottom: 20px;"><i class="fas fa-user-shield"></i></div>
+                    <h4 style="color: #ffffff; font-size: 1.25rem; font-weight: 700; margin-bottom: 12px;">Secure Admin Override</h4>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Password-protected admin dashboard controls, manual attendance overrides, and comprehensive SMS message delivery logs.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- How It Works Section -->
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h2 style="font-weight: 800; color: #ffffff; font-size: 2.2rem;">How It Works</h2>
+            <p style="color: #c9d1d9; font-size: 1.05rem;">A streamlined 3-step workflow for institutional attendance management.</p>
+        </div>
+        <div class="row text-center g-4">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="display: inline-block; width: 45px; height: 45px; background-color: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; text-align: center; line-height: 43px; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px;">1</div>
+                    <h5 style="color: #ffffff; font-weight: 700; font-size: 1.15rem; margin-bottom: 10px;">Register & Map Face</h5>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Add student details, phone numbers, and capture their facial biometric profiles directly through the secure registration portal.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="display: inline-block; width: 45px; height: 45px; background-color: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; text-align: center; line-height: 43px; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px;">2</div>
+                    <h5 style="color: #ffffff; font-weight: 700; font-size: 1.15rem; margin-bottom: 10px;">Scan & Mark Attendance</h5>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Open the live recognition scanner. The system instantly detects faces, matches embeddings against RAM cache, and logs attendance securely.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div style="display: inline-block; width: 45px; height: 45px; background-color: #21262d; color: #58a6ff; border: 1px solid #30363d; border-radius: 50%; text-align: center; line-height: 43px; font-weight: bold; font-size: 1.1rem; margin-bottom: 15px;">3</div>
+                    <h5 style="color: #ffffff; font-weight: 700; font-size: 1.15rem; margin-bottom: 10px;">Automate & Report</h5>
+                    <p style="color: #c9d1d9; font-size: 0.95rem; line-height: 1.6; margin-bottom: 0;">Unrecognized or absent records trigger automated SMS notifications at 10:00 AM, while administrators review comprehensive analytics.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer style="border-top: 1px solid #30363d; padding: 30px 0; text-align: center; color: #8b949e; margin-top: 80px;">
+        <div class="container">
+            <p class="mb-0" style="color: #8b949e;">&copy; 2026 AI Face Recognition Attendance System. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

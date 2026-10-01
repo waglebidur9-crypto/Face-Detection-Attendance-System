@@ -24,7 +24,6 @@
                     <thead class="table-dark">
                         <tr>
                             <th scope="col" class="ps-3 py-3" style="width: 70px;">S.No</th>
-                            <th scope="col" class="py-3 text-nowrap">Date</th>
                             <th scope="col" class="py-3 text-nowrap">Timestamp</th>
                             <th scope="col" class="py-3 text-nowrap">Student ID</th>
                             <th scope="col" class="py-3 text-nowrap">Student Name</th>
@@ -38,7 +37,6 @@
                             {% for log in logs %}
                             <tr>
                                 <td class="ps-3 text-muted">{{ loop.index }}</td>
-                                <td class="text-nowrap text-muted">{{ log.timestamp.strftime('%Y-%m-%d') if log.timestamp.strftime is defined else log.timestamp[:10] }}</td>
                                 <td class="text-nowrap">{{ log.timestamp }}</td>
                                 <td class="text-nowrap"><strong>{{ log.student_id }}</strong></td>
                                 <td class="text-nowrap">{{ log.name if log.name else 'Unknown' }}</td>
@@ -55,7 +53,7 @@
                             {% endfor %}
                         {% else %}
                             <tr>
-                                <td colspan="8" class="text-center py-5 text-muted">
+                                <td colspan="7" class="text-center py-5 text-muted">
                                     <i class="bi bi-inbox fs-2 d-block mb-2 text-secondary"></i>
                                     <p class="mb-0">No SMS alert history found.</p>
                                 </td>
